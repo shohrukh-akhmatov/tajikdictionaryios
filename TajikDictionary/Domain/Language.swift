@@ -1,0 +1,109 @@
+import SwiftUI
+
+/// A dictionary language matching `entries.lang` in `dictionary.sqlite`.
+enum Language: String, CaseIterable, Codable, Hashable, Sendable {
+    case tajik = "tg"
+    case russian = "ru"
+    case english = "en"
+
+    var tag: String {
+        switch self {
+        case .tajik: return "TJ"
+        case .russian: return "RU"
+        case .english: return "EN"
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .tajik: return String(localized: "Tajik")
+        case .russian: return String(localized: "Russian")
+        case .english: return String(localized: "English")
+        }
+    }
+
+    var speechLocaleIdentifier: String? {
+        switch self {
+        case .tajik: return nil
+        case .russian: return "ru-RU"
+        case .english: return "en-US"
+        }
+    }
+
+    /// Consistent brand badge color adapted for light & dark mode.
+    var tagColor: Color {
+        switch self {
+        case .tajik: return Color(light: Color(red: 0.0, green: 0.52, blue: 0.24), dark: Color(red: 0.36, green: 0.82, blue: 0.55))
+        case .russian: return Color(light: Color(red: 0.12, green: 0.36, blue: 0.78), dark: Color(red: 0.54, green: 0.71, blue: 1.0))
+        case .english: return Color(light: Color(red: 0.76, green: 0.25, blue: 0.05), dark: Color(red: 1.0, green: 0.64, blue: 0.42))
+        }
+    }
+}
+
+/// The two bidirectional dictionary modes. Each searches Tajik plus one partner language.
+enum DictionaryMode: String, CaseIterable, Identifiable, Codable, Sendable {
+    case tjRu
+    case tjEn
+
+    var id: String { rawValue }
+
+    var partner: Language {
+        switch self {
+        case .tjRu: return .russian
+        case .tjEn: return .english
+        }
+    }
+
+    var languages: Set<Language> {
+        [.tajik, partner]
+    }
+
+    var title: String {
+        switch self {
+        case .tjRu: return "TJK ⇄ RUS"
+        case .tjEn: return "TJK ⇄ ENG"
+        }
+    }
+
+    func translationTarget(for language: Language) -> Language {
+        language == .tajik ? partner : .tajik
+    }
+}
+
+enum PartOfSpeech: String, CaseIterable, Sendable {
+    case noun = "n"
+    case verb = "v"
+    case adjective = "adj"
+    case adverb = "adv"
+    case pronoun = "pron"
+    case numeral = "num"
+    case preposition = "prep"
+    case conjunction = "conj"
+    case interjection = "intj"
+    case particle = "part"
+    case phrase = "phr"
+
+    var label: String {
+        switch self {
+        case .noun: return "noun"
+        case .verb: return "verb"
+        case .adjective: return "adj."
+        case .adverb: return "adv."
+        case .pronoun: return "pron."
+        case .numeral: return "num."
+        case .preposition: return "prep."
+        case .conjunction: return "conj."
+        case .interjection: return "interj."
+        case .particle: return "part."
+        case .phrase: return "phrase"
+        }
+    }
+}
+
+private extension Color {
+    init(light: Color, dark: Color) {
+        self.init(UIColor { traits in
+            traits.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
+        })
+    }
+}

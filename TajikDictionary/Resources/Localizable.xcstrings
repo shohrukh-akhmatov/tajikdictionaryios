@@ -1,0 +1,60 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Dictionary" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Словарь" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Луғат" } }
+      }
+    },
+    "Saved" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Избранное" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Захирашуда" } }
+      }
+    },
+    "History" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "История" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Таърих" } }
+      }
+    },
+    "Settings" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Настройки" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Танзимот" } }
+      }
+    },
+    "Search Tajik or Russian…" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Поиск на таджикском или русском…" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Ҷустуҷӯ ба тоҷикӣ ё русӣ…" } }
+      }
+    },
+    "Search Tajik or English…" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Поиск на таджикском или английском…" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Ҷустуҷӯ ба тоҷикӣ ё англисӣ…" } }
+      }
+    },
+    "Word of the day" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Слово дня" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Калимаи рӯз" } }
+      }
+    },
+    "Recent searches" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Недавние" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Ҷустуҷӯҳои охир" } }
+      }
+    },
+    "Clear" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Очистить" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Пок кардан" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}
