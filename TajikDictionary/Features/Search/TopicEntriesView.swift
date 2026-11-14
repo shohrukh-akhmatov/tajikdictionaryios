@@ -21,6 +21,17 @@ struct TopicEntriesView: View {
         .listStyle(.plain)
         .navigationTitle(topic.capitalized)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !entries.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        StudyView(initialTopic: topic)
+                    } label: {
+                        Label(String(localized: "Study"), systemImage: "graduationcap")
+                    }
+                }
+            }
+        }
         .task(id: settings.mode) {
             entries = (try? await repository.entries(inTopic: topic, mode: settings.mode)) ?? []
         }

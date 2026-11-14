@@ -27,23 +27,14 @@ actor DictionaryRepository {
             return SearchOutcome(query: rawQuery, results: direct, searchedLanguages: languages, suggestedMode: nil, matchType: .direct)
         }
 
-        // Phase 1 fallback 1: morphological stem hints
+        // Phase 1 fallback 1: morphological stem hints (exact lemma match)
         let stems = WordStemmer.candidateStems(for: key, languages: languages)
         if !stems.isEmpty {
-            var seen = Set<Int64>()
-            var stemResults: [SearchResult] = []
-            for stem in stems {
-                for item in try prefixSearch(key: stem, languages: languages, mode: mode, limit: 15) {
-                    if seen.insert(item.id).inserted {
-                        stemResults.append(item)
-                    }
-                }
-                if stemResults.count >= limit { break }
-            }
+            let stemResults = try exactMatches(keys: stems, languages: languages, mode: mode, limit: limit)
             if !stemResults.isEmpty {
                 return SearchOutcome(
                     query: rawQuery,
-                    results: Array(stemResults.prefix(limit)),
+                    results: stemResults,
                     searchedLanguages: languages,
                     suggestedMode: nil,
                     matchType: .stem
@@ -66,6 +57,45 @@ actor DictionaryRepository {
         }
 
         return SearchOutcome(query: rawQuery, results: [], searchedLanguages: languages, suggestedMode: nil)
+    }
+
+    private func exactMatches(
+        keys: [String],
+        languages: Set<Language>,
+        mode: DictionaryMode,
+        limit: Int
+    ) throws -> [SearchResult] {
+        let orderedLangs = languages.sorted { $0.rawValue < $1.rawValue }
+        let langPlaceholders = orderedLangs.map { _ in "?" }.joined(separator: ",")
+        let keyPlaceholders = keys.map { _ in "?" }.joined(separator: ",")
+        let sql = """
+        SELECT e.id, e.lang, e.headword, e.pos,
+               (SELECT group_concat(h, ', ') FROM (
+                    SELECT t2.headword AS h
+                    FROM translations t JOIN entries t2 ON t2.id = t.to_id
+                    WHERE t.from_id = e.id
+                      AND t2.lang = CASE WHEN e.lang = 'tg' THEN ? ELSE 'tg' END
+                    ORDER BY t.position LIMIT 4)) AS preview
+        FROM entries e
+        WHERE e.lang IN (\(langPlaceholders))
+          AND e.search_key IN (\(keyPlaceholders))
+        ORDER BY e.frequency DESC, e.headword ASC
+        LIMIT \(limit)
+        """
+
+        var bindings: [SQLiteValue] = [.text(mode.partner.rawValue)]
+        orderedLangs.forEach { bindings.append(.text($0.rawValue)) }
+        keys.forEach { bindings.append(.text($0)) }
+
+        return try db.query(sql, bindings: bindings) { row in
+            SearchResult(
+                id: row.int64(0),
+                language: Language(rawValue: row.string(1)) ?? .tajik,
+                headword: row.string(2),
+                pos: row.stringOrNil(3).flatMap(PartOfSpeech.init(rawValue:)),
+                preview: row.stringOrNil(4) ?? ""
+            )
+        }
     }
 
     private func prefixSearch(

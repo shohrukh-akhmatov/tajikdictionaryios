@@ -42,3 +42,36 @@ final class HistoryItem {
 
     static let maxItems = 200
 }
+
+/// SM-2 flashcard review state persisted separately from the read-only dictionary DB.
+@Model
+final class FlashcardProgress {
+    @Attribute(.unique) var entryId: Int64
+    var lang: String
+    var headword: String
+    var preview: String
+    var repetitions: Int
+    var intervalDays: Int
+    var easeFactor: Double
+    var nextReviewAt: Date
+
+    init(
+        entryId: Int64,
+        lang: String,
+        headword: String,
+        preview: String,
+        repetitions: Int = 0,
+        intervalDays: Int = 0,
+        easeFactor: Double = 2.5,
+        nextReviewAt: Date = .now
+    ) {
+        self.entryId = entryId
+        self.lang = lang
+        self.headword = headword
+        self.preview = preview
+        self.repetitions = repetitions
+        self.intervalDays = intervalDays
+        self.easeFactor = easeFactor
+        self.nextReviewAt = nextReviewAt
+    }
+}

@@ -54,6 +54,6 @@ struct TajikDictionaryApp: App {
                 .environment(settings)
                 .environment(\.dictionaryRepository, repository)
         }
-        .modelContainer(for: [FavoriteItem.self, HistoryItem.self])
+        .modelContainer(for: [FavoriteItem.self, HistoryItem.self, FlashcardProgress.self])
     }
 }

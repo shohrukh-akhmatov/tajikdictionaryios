@@ -55,9 +55,9 @@ final class DictionaryTests: XCTestCase {
     func testStemmingFuzzyFallbackAndTopics() async throws {
         let repo = try DictionaryRepository()
 
-        let stemOutcome = try await repo.search(query: "китобҳо", mode: .tjRu)
+        let stemOutcome = try await repo.search(query: "хонаҳо", mode: .tjRu)
         XCTAssertEqual(stemOutcome.matchType, .stem)
-        XCTAssertTrue(stemOutcome.results.contains { $0.headword == "китоб" })
+        XCTAssertTrue(stemOutcome.results.contains { $0.headword == "хона" })
 
         let verbOutcome = try await repo.search(query: "меравам", mode: .tjRu)
         XCTAssertEqual(verbOutcome.matchType, .stem)
@@ -70,5 +70,25 @@ final class DictionaryTests: XCTestCase {
         let topics = try await repo.topics()
         XCTAssertFalse(topics.isEmpty)
         XCTAssertTrue(topics.contains { $0.topic == "verbs" })
+    }
+
+    func testFlashcardSchedulerSm2Intervals() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        let (first, _) = FlashcardScheduler.next(current: FlashcardState(), rating: .good, now: now)
+        XCTAssertEqual(first.repetitions, 1)
+        XCTAssertEqual(first.intervalDays, 1)
+
+        let (second, _) = FlashcardScheduler.next(current: first, rating: .good, now: now)
+        XCTAssertEqual(second.repetitions, 2)
+        XCTAssertEqual(second.intervalDays, 6)
+
+        let (third, dueThird) = FlashcardScheduler.next(current: second, rating: .easy, now: now)
+        XCTAssertEqual(third.repetitions, 3)
+        XCTAssertGreaterThan(third.intervalDays, 6)
+        XCTAssertGreaterThan(dueThird, now)
+
+        let (reset, _) = FlashcardScheduler.next(current: third, rating: .again, now: now)
+        XCTAssertEqual(reset.repetitions, 0)
+        XCTAssertEqual(reset.intervalDays, 0)
     }
 }

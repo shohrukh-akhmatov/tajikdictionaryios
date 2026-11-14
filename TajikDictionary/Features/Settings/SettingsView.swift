@@ -20,10 +20,34 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+
+                    Picker(String(localized: "Word size"), selection: $settings.fontScale) {
+                        ForEach(FontScaleSetting.allCases) { item in
+                            Text(item.title).tag(item)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section(String(localized: "Pronunciation")) {
+                    Toggle(String(localized: "Slow speech (0.75×)"), isOn: $settings.slowSpeech)
+                }
+
+                Section(String(localized: "Learning")) {
+                    NavigationLink {
+                        StudyView()
+                    } label: {
+                        Label(String(localized: "Flashcards"), systemImage: "graduationcap")
+                    }
+                    NavigationLink {
+                        GrammarGuideView()
+                    } label: {
+                        Label(String(localized: "Tajik Alphabet & Grammar"), systemImage: "text.book.closed")
+                    }
                 }
 
                 Section(String(localized: "About")) {
-                    LabeledContent(String(localized: "App"), value: "Tajik Dictionary 0.1.0")
+                    LabeledContent(String(localized: "App"), value: "Tajik Dictionary 0.2.0")
                     LabeledContent(String(localized: "Dictionary version"), value: info?.dataVersion ?? "…")
                     if let stats = info?.stats, !stats.isEmpty {
                         VStack(alignment: .leading, spacing: 4) {

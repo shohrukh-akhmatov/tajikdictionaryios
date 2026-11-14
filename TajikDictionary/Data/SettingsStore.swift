@@ -26,6 +26,30 @@ enum ThemeSetting: String, CaseIterable, Identifiable {
     }
 }
 
+enum FontScaleSetting: String, CaseIterable, Identifiable {
+    case small
+    case medium
+    case large
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .small: return String(localized: "Small")
+        case .medium: return String(localized: "Medium")
+        case .large: return String(localized: "Large")
+        }
+    }
+
+    var multiplier: CGFloat {
+        switch self {
+        case .small: return 0.9
+        case .medium: return 1.0
+        case .large: return 1.2
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class SettingsStore {
@@ -33,6 +57,8 @@ final class SettingsStore {
     private enum Keys {
         static let mode = "dictionary_mode"
         static let theme = "appearance_theme"
+        static let speechRate = "speech_rate"
+        static let fontScale = "font_scale"
     }
 
     var mode: DictionaryMode {
@@ -43,11 +69,27 @@ final class SettingsStore {
         didSet { defaults.set(theme.rawValue, forKey: Keys.theme) }
     }
 
+    /// 0.42 (slow ~0.75x) or 0.5 (Apple's default normal rate).
+    var slowSpeech: Bool {
+        didSet { defaults.set(slowSpeech, forKey: Keys.speechRate) }
+    }
+
+    var fontScale: FontScaleSetting {
+        didSet { defaults.set(fontScale.rawValue, forKey: Keys.fontScale) }
+    }
+
+    var avSpeechRate: Float {
+        slowSpeech ? 0.38 : 0.5
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         let savedMode = defaults.string(forKey: Keys.mode).flatMap(DictionaryMode.init(rawValue:)) ?? .tjRu
         let savedTheme = defaults.string(forKey: Keys.theme).flatMap(ThemeSetting.init(rawValue:)) ?? .system
+        let savedScale = defaults.string(forKey: Keys.fontScale).flatMap(FontScaleSetting.init(rawValue:)) ?? .medium
         self.mode = savedMode
         self.theme = savedTheme
+        self.slowSpeech = defaults.bool(forKey: Keys.speechRate)
+        self.fontScale = savedScale
     }
 }

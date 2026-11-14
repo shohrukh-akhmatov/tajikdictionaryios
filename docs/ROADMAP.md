@@ -18,9 +18,9 @@
 - [ ] Scale `data/source/dictionary.csv` to **5,000 → 10,000** curated Tajik entries with frequency rankings and examples
 
 ## Phase 2 — Learning & Study Tools
-- [ ] **Offline Flashcard Quiz (SM-2 Spaced Repetition)** powered by Saved words or Topic packs, with flip cards, streak tracking, and persistent study progress
-- [ ] **TTS Speed Toggle** (`0.75×` / `1.0×`) + **Entry Font Size** setting (`Small` / `Medium` / `Large`)
-- [ ] **Tajik Alphabet & Grammar Quick Reference** sheet (letters `ғ ӣ қ ӯ ҳ ҷ`, verb stem patterns, ezafe `-и`)
+- [x] **Offline Flashcard Quiz (SM-2 Spaced Repetition)** powered by Saved words or Topic packs, with flip cards, streak tracking, and persistent study progress
+- [x] **TTS Speed Toggle** (`0.75×` / `1.0×`) + **Entry Font Size** setting (`Small` / `Medium` / `Large`)
+- [x] **Tajik Alphabet & Grammar Quick Reference** sheet (letters `ғ ӣ қ ӯ ҳ ҷ`, verb stem patterns, ezafe `-и`)
 - [ ] Optional downloadable native Tajik audio pack (Opus/AAC) for top 2,000–3,000 words
 
 ## Phase 3 — OS Integrations & Power Features

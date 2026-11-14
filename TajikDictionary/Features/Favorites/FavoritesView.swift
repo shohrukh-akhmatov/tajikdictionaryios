@@ -36,6 +36,17 @@ struct FavoritesView: View {
                 }
             }
             .navigationTitle(String(localized: "Saved"))
+            .toolbar {
+                if !favorites.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink {
+                            StudyView()
+                        } label: {
+                            Label(String(localized: "Study"), systemImage: "graduationcap")
+                        }
+                    }
+                }
+            }
             .navigationDestination(for: Int64.self) { entryId in
                 EntryDetailView(entryId: entryId)
             }

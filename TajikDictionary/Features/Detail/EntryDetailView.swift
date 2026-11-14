@@ -7,12 +7,13 @@ import SwiftUI
 final class SpeechSpeaker {
     private let synthesizer = AVSpeechSynthesizer()
 
-    func speak(_ text: String, localeIdentifier: String) {
+    func speak(_ text: String, localeIdentifier: String, rate: Float = AVSpeechUtteranceDefaultSpeechRate) {
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: localeIdentifier)
+        utterance.rate = rate
         synthesizer.speak(utterance)
     }
 
@@ -107,13 +108,13 @@ struct EntryDetailView: View {
                     }
 
                     Text(detail.entry.headword)
-                        .font(.largeTitle.bold())
+                        .font(.system(size: 34 * settings.fontScale.multiplier, weight: .bold))
                         .textSelection(.enabled)
 
                     HStack(spacing: 10) {
                         if let locale = detail.entry.language.speechLocaleIdentifier {
                             Button {
-                                speaker.speak(detail.entry.headword, localeIdentifier: locale)
+                                speaker.speak(detail.entry.headword, localeIdentifier: locale, rate: settings.avSpeechRate)
                             } label: {
                                 Label(String(localized: "Listen"), systemImage: "speaker.wave.2.fill")
                             }

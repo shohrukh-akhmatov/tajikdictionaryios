@@ -172,6 +172,7 @@ class Builder:
         self.examples: List[Tuple[int, str, Optional[str], Optional[str]]] = []
         self._target_index: Dict[Tuple[str, str], int] = {}
         self._links = set()
+        self._out_counts: Dict[int, int] = {}
         self._seen_tg_pos = set()
         self.warnings: List[str] = []
         self.pos_counts: Counter = Counter()
@@ -200,6 +201,7 @@ class Builder:
             return
         self._links.add((a, b))
         self.translations.append((a, b, position, note))
+        self._out_counts[a] = self._out_counts.get(a, 0) + 1
 
     def add_row(self, line: int, row: Dict[str, str]) -> None:
         tg = (row.get("tg") or "").strip()
@@ -238,7 +240,7 @@ class Builder:
                 headword, note = split_translation(raw)
                 target_id = self._target(lang, headword, pos, freq, topic)
                 self._link(tg_id, target_id, position, note)      # TJ -> RU/EN
-                reverse_pos = sum(1 for (a, _, _, _) in self.translations if a == target_id)
+                reverse_pos = self._out_counts.get(target_id, 0)
                 self._link(target_id, tg_id, reverse_pos, note)   # RU/EN -> TJ
 
         ex_tg = (row.get("example_tg") or "").strip()

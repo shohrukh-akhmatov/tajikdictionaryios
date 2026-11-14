@@ -1,0 +1,216 @@
+import SwiftData
+import SwiftUI
+
+struct StudyCard: Identifiable {
+    var id: Int64 { entryId }
+    let entryId: Int64
+    let language: Language
+    let headword: String
+    let preview: String
+}
+
+struct StudyView: View {
+    var initialTopic: String? = nil
+
+    @Environment(\.dictionaryRepository) private var repository
+    @Environment(\.modelContext) private var modelContext
+    @Environment(SettingsStore.self) private var settings
+
+    @Query(sort: \FavoriteItem.addedAt, order: .reverse) private var favorites: [FavoriteItem]
+    @Query private var progress: [FlashcardProgress]
+
+    @State private var selectedTopic: String?
+    @State private var topics: [TopicCount] = []
+    @State private var cards: [StudyCard] = []
+    @State private var currentIndex = 0
+    @State private var flipped = false
+    @State private var reviewedCount = 0
+
+    init(initialTopic: String? = nil) {
+        self.initialTopic = initialTopic
+        _selectedTopic = State(initialValue: initialTopic)
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    deckPill(title: String(localized: "Saved"), active: selectedTopic == nil) {
+                        selectedTopic = nil
+                    }
+                    ForEach(topics) { item in
+                        deckPill(title: item.topic, active: selectedTopic == item.topic) {
+                            selectedTopic = item.topic
+                        }
+                    }
+                }
+                .padding(.horizontal)
+            }
+            .padding(.top, 8)
+
+            if cards.isEmpty {
+                ContentUnavailableView(
+                    String(localized: "Nothing to study yet"),
+                    systemImage: "graduationcap",
+                    description: Text(String(localized: "Save a few words with the star icon or pick a topic above."))
+                )
+            } else if currentIndex >= cards.count {
+                ContentUnavailableView {
+                    Label(String(localized: "Session complete!"), systemImage: "checkmark.circle.fill")
+                } description: {
+                    Text("You reviewed \(reviewedCount) cards.")
+                } actions: {
+                    Button(String(localized: "Study Again")) {
+                        currentIndex = 0
+                        reviewedCount = 0
+                        flipped = false
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+            } else {
+                let card = cards[currentIndex]
+                ProgressView(value: Double(currentIndex), total: Double(cards.count))
+                    .padding(.horizontal)
+
+                Text("\(currentIndex + 1) / \(cards.count)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                VStack(spacing: 14) {
+                    LanguageTag(language: card.language)
+                    Text(card.headword)
+                        .font(.system(size: 34, weight: .bold))
+                        .multilineTextAlignment(.center)
+                    if flipped {
+                        Text(card.preview.isEmpty ? "—" : card.preview)
+                            .font(.title3)
+                            .foregroundStyle(.tint)
+                            .multilineTextAlignment(.center)
+                    } else {
+                        Text(String(localized: "Tap card to reveal translation"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(24)
+                .background(.background.secondary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .padding(.horizontal)
+                .onTapGesture {
+                    flipped.toggle()
+                }
+
+                Spacer()
+
+                if !flipped {
+                    Button {
+                        flipped = true
+                    } label: {
+                        Text(String(localized: "Show Answer"))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .padding(.horizontal)
+                } else {
+                    HStack(spacing: 10) {
+                        Button(role: .destructive) { grade(card, .again) } label: {
+                            Text(String(localized: "Again")).frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+
+                        Button { grade(card, .good) } label: {
+                            Text(String(localized: "Good")).frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+
+                        Button { grade(card, .easy) } label: {
+                            Text(String(localized: "Easy")).frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .controlSize(.large)
+                    .padding(.horizontal)
+                }
+            }
+        }
+        .padding(.bottom, 16)
+        .navigationTitle(selectedTopic.map { "Study: \($0)" } ?? String(localized: "Flashcards"))
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            topics = (try? await repository.topics()) ?? []
+            await reloadCards()
+        }
+        .onChange(of: selectedTopic) { _, _ in
+            Task { await reloadCards() }
+        }
+        .onChange(of: settings.mode) { _, _ in
+            Task { await reloadCards() }
+        }
+    }
+
+    @ViewBuilder
+    private func deckPill(title: String, active: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(active ? "✓ \(title)" : title)
+                .font(.caption.weight(.medium))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(active ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.12), in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func reloadCards() async {
+        let now = Date.now
+        let progressById = Dictionary(uniqueKeysWithValues: progress.map { ($0.entryId, $0) })
+        let raw: [StudyCard]
+        if let topic = selectedTopic {
+            let rows = (try? await repository.entries(inTopic: topic, mode: settings.mode)) ?? []
+            raw = rows.map { StudyCard(entryId: $0.id, language: $0.language, headword: $0.headword, preview: $0.preview) }
+        } else {
+            raw = favorites.map { StudyCard(entryId: $0.entryId, language: $0.language, headword: $0.headword, preview: $0.preview) }
+        }
+        let sorted = raw.sorted {
+            (progressById[$0.entryId]?.nextReviewAt ?? .distantPast) < (progressById[$1.entryId]?.nextReviewAt ?? .distantPast)
+        }
+        let due = sorted.filter { (progressById[$0.entryId]?.nextReviewAt ?? .distantPast) <= now }
+        cards = due.isEmpty ? sorted : due
+        currentIndex = 0
+        flipped = false
+        reviewedCount = 0
+    }
+
+    private func grade(_ card: StudyCard, _ rating: ReviewRating) {
+        let existing = progress.first { $0.entryId == card.entryId }
+        let currentState = existing.map {
+            FlashcardState(repetitions: $0.repetitions, intervalDays: $0.intervalDays, easeFactor: $0.easeFactor)
+        } ?? FlashcardState()
+        let (nextState, due) = FlashcardScheduler.next(current: currentState, rating: rating)
+
+        if let existing {
+            existing.repetitions = nextState.repetitions
+            existing.intervalDays = nextState.intervalDays
+            existing.easeFactor = nextState.easeFactor
+            existing.nextReviewAt = due
+            existing.preview = card.preview
+        } else {
+            modelContext.insert(FlashcardProgress(
+                entryId: card.entryId,
+                lang: card.language.rawValue,
+                headword: card.headword,
+                preview: card.preview,
+                repetitions: nextState.repetitions,
+                intervalDays: nextState.intervalDays,
+                easeFactor: nextState.easeFactor,
+                nextReviewAt: due
+            ))
+        }
+
+        reviewedCount += 1
+        currentIndex += 1
+        flipped = false
+    }
+}
