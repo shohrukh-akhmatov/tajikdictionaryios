@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Builds the offline dictionary database (SQLite) from data/source/dictionary.csv.
+Builds and validates the offline dictionary database (SQLite) from data/source/dictionary.csv.
 
 The SAME script and the SAME normalization rules are used by both apps:
   * Android: app/src/main/assets/dictionary.sqlite
@@ -8,6 +8,7 @@ The SAME script and the SAME normalization rules are used by both apps:
 
 Usage:
     python3 tools/build_dictionary.py                      # build with default output path
+    python3 tools/build_dictionary.py --check              # lint CSV and print stats without writing
     python3 tools/build_dictionary.py --out path/to/dictionary.sqlite
     python3 tools/build_dictionary.py --self-test          # verify normalization vectors
 
@@ -31,6 +32,7 @@ import re
 import sqlite3
 import sys
 import unicodedata
+from collections import Counter
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
@@ -42,6 +44,7 @@ DEFAULT_OUTPUTS = [
     ("app", os.path.join(ROOT, "app", "src", "main", "assets", "dictionary.sqlite")),               # Android repo
     ("TajikDictionary", os.path.join(ROOT, "TajikDictionary", "Resources", "dictionary.sqlite")),   # iOS repo
 ]
+REQUIRED_COLUMNS = {"tg", "pos", "ru", "en", "frequency", "topic", "example_tg", "example_ru", "example_en"}
 VALID_POS = {"n", "v", "adj", "adv", "pron", "num", "prep", "conj", "intj", "part", "phr"}
 
 # ---------------------------------------------------------------------------
@@ -113,7 +116,7 @@ def self_test() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Build
+# Build & Linter
 # ---------------------------------------------------------------------------
 SCHEMA = """
 CREATE TABLE metadata (
@@ -169,6 +172,10 @@ class Builder:
         self.examples: List[Tuple[int, str, Optional[str], Optional[str]]] = []
         self._target_index: Dict[Tuple[str, str], int] = {}
         self._links = set()
+        self._seen_tg_pos = set()
+        self.warnings: List[str] = []
+        self.pos_counts: Counter = Counter()
+        self.topic_counts: Counter = Counter()
 
     def _add_entry(self, lang: str, headword: str, pos: Optional[str], freq: int, topic: Optional[str]) -> int:
         entry_id = len(self.entries) + 1
@@ -201,15 +208,33 @@ class Builder:
             raise ValueError(f"line {line}: empty 'tg'")
         if pos and pos not in VALID_POS:
             raise ValueError(f"line {line}: unknown pos '{pos}' (valid: {sorted(VALID_POS)})")
+
+        if (tg.lower(), pos or "") in self._seen_tg_pos:
+            self.warnings.append(f"line {line}: duplicate (tg={tg!r}, pos={pos!r})")
+        self._seen_tg_pos.add((tg.lower(), pos or ""))
+
         ru, en = parse_list(row.get("ru", "")), parse_list(row.get("en", ""))
         if not ru and not en:
             raise ValueError(f"line {line}: '{tg}' has no translations")
-        freq = int((row.get("frequency") or "0").strip() or 0)
+        if not ru:
+            self.warnings.append(f"line {line}: '{tg}' missing Russian translation")
+        if not en:
+            self.warnings.append(f"line {line}: '{tg}' missing English translation")
+
+        freq_raw = (row.get("frequency") or "0").strip() or "0"
+        freq = int(freq_raw)
+        if not (0 <= freq <= 100):
+            raise ValueError(f"line {line}: frequency {freq} out of range 0..100")
+
         topic = (row.get("topic") or "").strip() or None
+        self.pos_counts[pos or "(none)"] += 1
+        self.topic_counts[topic or "(none)"] += 1
 
         tg_id = self._add_entry("tg", tg, pos, freq, topic)
         for lang, items in (("ru", ru), ("en", en)):
             for position, raw in enumerate(items):
+                if raw.count("(") != raw.count(")"):
+                    self.warnings.append(f"line {line}: unbalanced parentheses in {lang} item {raw!r}")
                 headword, note = split_translation(raw)
                 target_id = self._target(lang, headword, pos, freq, topic)
                 self._link(tg_id, target_id, position, note)      # TJ -> RU/EN
@@ -221,6 +246,18 @@ class Builder:
             self.examples.append((tg_id, ex_tg,
                                   (row.get("example_ru") or "").strip() or None,
                                   (row.get("example_en") or "").strip() or None))
+
+    def summary(self) -> Dict[str, object]:
+        return {
+            "tg": sum(1 for e in self.entries if e["lang"] == "tg"),
+            "ru": sum(1 for e in self.entries if e["lang"] == "ru"),
+            "en": sum(1 for e in self.entries if e["lang"] == "en"),
+            "translations": len(self.translations),
+            "examples": len(self.examples),
+            "topics": dict(self.topic_counts.most_common()),
+            "pos": dict(self.pos_counts.most_common()),
+            "warnings": len(self.warnings),
+        }
 
     def write(self, out_path: str, source_path: str) -> Dict[str, int]:
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -258,17 +295,29 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source", default=DEFAULT_SOURCE)
     parser.add_argument("--out", help="output .sqlite path (default: the app's bundled asset path)")
+    parser.add_argument("--check", action="store_true", help="validate CSV and print stats without writing .sqlite")
     parser.add_argument("--self-test", action="store_true", help="run normalization test vectors and exit")
     args = parser.parse_args()
 
     if args.self_test:
         self_test()
-        return
+        if not args.check:
+            return
 
     builder = Builder()
     with open(args.source, encoding="utf-8", newline="") as f:
-        for line, row in enumerate(csv.DictReader(f), start=2):
+        reader = csv.DictReader(f)
+        missing_cols = REQUIRED_COLUMNS - set(reader.fieldnames or [])
+        if missing_cols:
+            sys.exit(f"Missing CSV column(s): {sorted(missing_cols)}")
+        for line, row in enumerate(reader, start=2):
             builder.add_row(line, row)
+
+    if args.check:
+        for w in builder.warnings:
+            print(f"WARN: {w}", file=sys.stderr)
+        print(json.dumps(builder.summary(), ensure_ascii=False, indent=2))
+        return
 
     if args.out:
         outputs = [args.out]

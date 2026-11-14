@@ -61,11 +61,15 @@ struct SearchView: View {
             .navigationDestination(for: Int64.self) { entryId in
                 EntryDetailView(entryId: entryId)
             }
+            .navigationDestination(for: TopicCount.self) { topicItem in
+                TopicEntriesView(topic: topicItem.topic)
+            }
         }
         .task {
             if viewModel == nil {
                 let vm = SearchViewModel(repository: repository)
                 viewModel = vm
+                await vm.loadTopics()
                 await vm.refreshWordOfTheDay(mode: settings.mode)
             }
         }
@@ -94,17 +98,30 @@ struct SearchView: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
-        } else if let results = viewModel?.outcome.results, results.isEmpty {
+        } else if let outcome = viewModel?.outcome, outcome.results.isEmpty {
             ContentUnavailableView.search(text: trimmed)
-        } else if let results = viewModel?.outcome.results {
-            List(results) { row in
-                NavigationLink(value: row.id) {
-                    WordRowView(
-                        language: row.language,
-                        headword: row.headword,
-                        pos: row.pos,
-                        preview: row.preview
-                    )
+        } else if let outcome = viewModel?.outcome {
+            List {
+                if outcome.matchType != .direct {
+                    Section {
+                        Text(
+                            outcome.matchType == .stem
+                                ? "Showing base forms for “\(trimmed)”"
+                                : String(localized: "Showing closest spelling matches")
+                        )
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                }
+                ForEach(outcome.results) { row in
+                    NavigationLink(value: row.id) {
+                        WordRowView(
+                            language: row.language,
+                            headword: row.headword,
+                            pos: row.pos,
+                            preview: row.preview
+                        )
+                    }
                 }
             }
             .listStyle(.plain)
@@ -137,6 +154,26 @@ struct SearchView: View {
                                 Text(wotd.preview)
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+
+            if let topics = viewModel?.topics, !topics.isEmpty {
+                Section(String(localized: "Topics")) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(topics) { item in
+                                NavigationLink(value: item) {
+                                    Text("\(item.topic) (\(item.count))")
+                                        .font(.caption.weight(.medium))
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 6)
+                                        .background(.tint.opacity(0.12), in: Capsule())
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.vertical, 4)

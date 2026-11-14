@@ -11,10 +11,10 @@
 - [x] Word of the Day (deterministic offline), Favorites, History (max 200), Settings, Light/Dark theme, `en`/`ru`/`tg` UI localization
 
 ## Phase 1 — Smart Search, Topics & 5k–10k Lexicon Readiness
-- [ ] CSV quality linter & statistics validator in `tools/build_dictionary.py --check` (duplicate detection, POS validation, sense formatting, coverage report)
-- [ ] **Tajik & Russian Stemming / Inflection Hints** (recognizes `ме-`, `на-`, `би-`, `-ҳо`, `-он`, `-ро`, `-ам/-ат/-аш` so searching `меравам` finds `рафтан`)
-- [ ] **Fuzzy / Typo Fallback** (edit-distance-1 + phonetic similarity when exact/prefix search returns fewer than 3 hits)
-- [ ] **Topic / Category Browser** (`greetings`, `food`, `family`, `home`, `nature`, `travel`, `health`, `education`, `verbs`, `numbers`, etc.)
+- [x] CSV quality linter & statistics validator in `tools/build_dictionary.py --check` (duplicate detection, POS validation, sense formatting, coverage report)
+- [x] **Tajik & Russian Stemming / Inflection Hints** (recognizes `ме-`, `на-`, `би-`, `-ҳо`, `-он`, `-ро`, `-ам/-ат/-аш` so searching `меравам` finds `рафтан`)
+- [x] **Fuzzy / Typo Fallback** (edit-distance-1 + phonetic similarity when exact/prefix search returns no direct hits)
+- [x] **Topic / Category Browser** (`greetings`, `food`, `family`, `home`, `nature`, `travel`, `health`, `education`, `verbs`, `numbers`, etc.)
 - [ ] Scale `data/source/dictionary.csv` to **5,000 → 10,000** curated Tajik entries with frequency rankings and examples
 
 ## Phase 2 — Learning & Study Tools

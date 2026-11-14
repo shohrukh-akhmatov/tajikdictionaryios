@@ -51,4 +51,24 @@ final class DictionaryTests: XCTestCase {
         XCTAssertTrue(wrongMode.results.isEmpty)
         XCTAssertEqual(wrongMode.suggestedMode, .tjEn)
     }
+
+    func testStemmingFuzzyFallbackAndTopics() async throws {
+        let repo = try DictionaryRepository()
+
+        let stemOutcome = try await repo.search(query: "китобҳо", mode: .tjRu)
+        XCTAssertEqual(stemOutcome.matchType, .stem)
+        XCTAssertTrue(stemOutcome.results.contains { $0.headword == "китоб" })
+
+        let verbOutcome = try await repo.search(query: "меравам", mode: .tjRu)
+        XCTAssertEqual(verbOutcome.matchType, .stem)
+        XCTAssertTrue(verbOutcome.results.contains { $0.headword == "рафтан" })
+
+        let fuzzyOutcome = try await repo.search(query: "салам", mode: .tjRu)
+        XCTAssertEqual(fuzzyOutcome.matchType, .fuzzy)
+        XCTAssertTrue(fuzzyOutcome.results.contains { $0.headword == "салом" })
+
+        let topics = try await repo.topics()
+        XCTAssertFalse(topics.isEmpty)
+        XCTAssertTrue(topics.contains { $0.topic == "verbs" })
+    }
 }

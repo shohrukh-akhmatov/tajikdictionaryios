@@ -13,9 +13,14 @@ final class SearchViewModel {
 
     var outcome: SearchOutcome = .empty
     var wordOfTheDay: (entry: Entry, preview: String)?
+    var topics: [TopicCount] = []
 
     init(repository: DictionaryRepository) {
         self.repository = repository
+    }
+
+    func loadTopics() async {
+        topics = (try? await repository.topics()) ?? []
     }
 
     func refreshWordOfTheDay(mode: DictionaryMode) async {

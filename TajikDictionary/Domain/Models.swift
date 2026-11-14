@@ -8,13 +8,40 @@ struct SearchResult: Identifiable, Hashable, Sendable {
     let preview: String
 }
 
+enum SearchMatchType: Sendable {
+    case direct
+    case stem
+    case fuzzy
+}
+
 struct SearchOutcome: Sendable {
     let query: String
     let results: [SearchResult]
     let searchedLanguages: Set<Language>
     let suggestedMode: DictionaryMode?
+    let matchType: SearchMatchType
+
+    init(
+        query: String,
+        results: [SearchResult],
+        searchedLanguages: Set<Language>,
+        suggestedMode: DictionaryMode?,
+        matchType: SearchMatchType = .direct
+    ) {
+        self.query = query
+        self.results = results
+        self.searchedLanguages = searchedLanguages
+        self.suggestedMode = suggestedMode
+        self.matchType = matchType
+    }
 
     static let empty = SearchOutcome(query: "", results: [], searchedLanguages: [], suggestedMode: nil)
+}
+
+struct TopicCount: Identifiable, Hashable, Sendable {
+    var id: String { topic }
+    let topic: String
+    let count: Int
 }
 
 struct Entry: Identifiable, Hashable, Sendable {
