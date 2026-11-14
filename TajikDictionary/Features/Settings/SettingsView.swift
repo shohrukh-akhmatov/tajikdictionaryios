@@ -1,9 +1,17 @@
+import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Environment(\.dictionaryRepository) private var repository
+    @Environment(\.modelContext) private var modelContext
     @Environment(SettingsStore.self) private var settings
+    @Query(sort: \FavoriteItem.addedAt, order: .reverse) private var favorites: [FavoriteItem]
     @State private var info: DictionaryInfo?
+    @State private var exportDocument: FavoritesBackupDocument?
+    @State private var isExporting = false
+    @State private var isImporting = false
+    @State private var backupMessage: String?
 
     var body: some View {
         @Bindable var settings = settings
@@ -46,8 +54,31 @@ struct SettingsView: View {
                     }
                 }
 
+                Section(String(localized: "Backup & Transfer")) {
+                    Button {
+                        if let data = try? FavoritesBackup.encode(favorites) {
+                            exportDocument = FavoritesBackupDocument(data: data)
+                            isExporting = true
+                        }
+                    } label: {
+                        Label(String(localized: "Export saved words (JSON)"), systemImage: "square.and.arrow.up")
+                    }
+
+                    Button {
+                        isImporting = true
+                    } label: {
+                        Label(String(localized: "Import saved words (JSON)"), systemImage: "square.and.arrow.down")
+                    }
+
+                    if let backupMessage {
+                        Text(backupMessage)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 Section(String(localized: "About")) {
-                    LabeledContent(String(localized: "App"), value: "Tajik Dictionary 0.2.0")
+                    LabeledContent(String(localized: "App"), value: "Tajik Dictionary 0.3.0")
                     LabeledContent(String(localized: "Dictionary version"), value: info?.dataVersion ?? "…")
                     if let stats = info?.stats, !stats.isEmpty {
                         VStack(alignment: .leading, spacing: 4) {
@@ -65,6 +96,60 @@ struct SettingsView: View {
             .navigationTitle(String(localized: "Settings"))
             .task {
                 info = try? await repository.info()
+            }
+            .fileExporter(
+                isPresented: $isExporting,
+                document: exportDocument,
+                contentType: .json,
+                defaultFilename: "tajik-dictionary-favorites"
+            ) { result in
+                switch result {
+                case .success:
+                    backupMessage = String(localized: "Exported \(favorites.count) saved words")
+                case .failure:
+                    backupMessage = String(localized: "Could not save backup file")
+                }
+            }
+            .fileImporter(
+                isPresented: $isImporting,
+                allowedContentTypes: [.json],
+                allowsMultipleSelection: false
+            ) { result in
+                switch result {
+                case .success(let urls):
+                    guard let url = urls.first else { return }
+                    let scoped = url.startAccessingSecurityScopedResource()
+                    defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                    do {
+                        let data = try Data(contentsOf: url)
+                        let records = try FavoritesBackup.decodeRecords(from: data)
+                        for record in records {
+                            let targetId = record.entryId
+                            let existing = (try? modelContext.fetch(
+                                FetchDescriptor<FavoriteItem>(predicate: #Predicate { $0.entryId == targetId })
+                            ))?.first
+                            if let existing {
+                                existing.lang = record.lang
+                                existing.headword = record.headword
+                                existing.preview = record.preview
+                            } else {
+                                modelContext.insert(FavoriteItem(
+                                    entryId: record.entryId,
+                                    lang: record.lang,
+                                    headword: record.headword,
+                                    preview: record.preview,
+                                    addedAt: Date(timeIntervalSince1970: Double(record.addedAt) / 1000.0)
+                                ))
+                            }
+                        }
+                        try? modelContext.save()
+                        backupMessage = String(localized: "Imported \(records.count) saved words")
+                    } catch {
+                        backupMessage = String(localized: "Could not read backup file")
+                    }
+                case .failure:
+                    backupMessage = String(localized: "Could not read backup file")
+                }
             }
         }
     }

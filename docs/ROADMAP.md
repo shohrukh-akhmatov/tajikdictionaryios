@@ -15,7 +15,7 @@
 - [x] **Tajik & Russian Stemming / Inflection Hints** (recognizes `ме-`, `на-`, `би-`, `-ҳо`, `-он`, `-ро`, `-ам/-ат/-аш` so searching `меравам` finds `рафтан`)
 - [x] **Fuzzy / Typo Fallback** (edit-distance-1 + phonetic similarity when exact/prefix search returns no direct hits)
 - [x] **Topic / Category Browser** (`greetings`, `food`, `family`, `home`, `nature`, `travel`, `health`, `education`, `verbs`, `numbers`, etc.)
-- [ ] Scale `data/source/dictionary.csv` to **5,000 → 10,000** curated Tajik entries with frequency rankings and examples
+- [x] Scale `data/source/dictionary.csv` to **5,000 → 10,000** curated Tajik entries with frequency rankings and examples (currently **8,041** Tajik / **29,893** total entries)
 
 ## Phase 2 — Learning & Study Tools
 - [x] **Offline Flashcard Quiz (SM-2 Spaced Repetition)** powered by Saved words or Topic packs, with flip cards, streak tracking, and persistent study progress
@@ -24,9 +24,9 @@
 - [ ] Optional downloadable native Tajik audio pack (Opus/AAC) for top 2,000–3,000 words
 
 ## Phase 3 — OS Integrations & Power Features
-- [ ] **Home Screen Widget** showing Word of the Day (Android AppWidget / iOS WidgetKit)
-- [ ] **Favorites Export / Import (JSON)** so users can back up or transfer saved words across devices
-- [ ] **System Quick Lookup** polish (Android `ACTION_PROCESS_TEXT` live intent handling; iOS `CoreSpotlight` indexing / Share Extension)
+- [x] **Home Screen Widget** showing Word of the Day (Android AppWidget / iOS WidgetKit)
+- [x] **Favorites Export / Import (JSON)** so users can back up or transfer saved words across devices
+- [x] **System Quick Lookup** polish (Android `ACTION_PROCESS_TEXT` live intent handling; iOS `CoreSpotlight` indexing / deep links)
 - [ ] Offline Camera OCR Lookup (ML Kit on Android / VisionKit on iOS)
 
 ## Phase 4 — Store Release & OTA Lexicon Updates

@@ -8,8 +8,11 @@ An **offline-first** Tajik–Russian–Tajik and Tajik–English–Tajik diction
 * **Tajik Keyboard Folding:** Typing `хурдан` on a Russian keyboard finds `хӯрдан` (`ғ→г`, `қ→к`, `ҳ→х`, `ҷ→ч`, `ӣ→и`, `ӯ→у`).
 * **On-Screen Tajik Letter Bar:** One-tap `ғ ӣ қ ӯ ҳ ҷ` buttons right under the search bar.
 * **Cross-Mode Detection:** Typing English while in `TJK ⇄ RUS` offers a one-tap switch to `TJK ⇄ ENG`.
-* **Entry Detail:** Tappable cross-linked translations, usage notes, trilingual examples, Copy, Share, Favorite, and offline Russian/English `AVSpeechSynthesizer` pronunciation.
-* **Saved & History + Word of the Day:** Stored in SwiftData separately from the read-only `dictionary.sqlite` bundle so user data survives dictionary updates.
+* **Entry Detail:** Tappable cross-linked translations, usage notes, trilingual examples, Copy, Share, Favorite, and offline Russian/English `AVSpeechSynthesizer` pronunciation (`0.75×` / `1.0×` speed + adjustable word font size).
+* **Smart Fallback Search & Topics:** Morphological stem hints (`ме-`, `на-`, `би-`, `-ҳо`, `-он`, `-ам/-ат/-аш`), bounded edit-distance typo matching, and browsable topic categories.
+* **SM-2 Flashcards & Grammar Guide:** Offline spaced-repetition study decks (Saved words or any Topic) plus a quick reference for Tajik letters (`ғ ӣ қ ӯ ҳ ҷ`) and grammar patterns.
+* **Saved & History + Backup:** Stored in SwiftData separately from the read-only `dictionary.sqlite` bundle, with cross-platform JSON export/import.
+* **WidgetKit & CoreSpotlight:** Offline Word of the Day Home Screen widget (`tajikdictionary://entry/<id>`) and `CoreSpotlight` indexing of top dictionary entries.
 
 ## Updating the Word Database (5k / 10k Words)
 All words live in [`data/source/dictionary.csv`](data/source/dictionary.csv). After editing or expanding it:

@@ -6,14 +6,20 @@ struct SearchView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SettingsStore.self) private var settings
 
+    @Binding var deepLinkEntryId: Int64?
     @Query(sort: \HistoryItem.viewedAt, order: .reverse) private var recent: [HistoryItem]
     @State private var viewModel: SearchViewModel?
     @State private var query: String = ""
     @State private var searchTask: Task<Void, Never>?
+    @State private var navigationPath = NavigationPath()
+
+    init(deepLinkEntryId: Binding<Int64?> = .constant(nil)) {
+        _deepLinkEntryId = deepLinkEntryId
+    }
 
     var body: some View {
         @Bindable var settings = settings
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             VStack(spacing: 0) {
                 VStack(spacing: 10) {
                     ModeSwitcher(mode: $settings.mode)
@@ -72,6 +78,15 @@ struct SearchView: View {
                 await vm.loadTopics()
                 await vm.refreshWordOfTheDay(mode: settings.mode)
             }
+            if let entryId = deepLinkEntryId {
+                navigationPath.append(entryId)
+                deepLinkEntryId = nil
+            }
+        }
+        .onChange(of: deepLinkEntryId) { _, entryId in
+            guard let entryId else { return }
+            navigationPath.append(entryId)
+            deepLinkEntryId = nil
         }
         .onChange(of: query) { _, newValue in
             triggerSearch(newValue, mode: settings.mode)

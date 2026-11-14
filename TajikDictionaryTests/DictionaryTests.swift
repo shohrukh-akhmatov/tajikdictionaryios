@@ -1,3 +1,4 @@
+import CoreSpotlight
 import XCTest
 @testable import TajikDictionary
 
@@ -90,5 +91,35 @@ final class DictionaryTests: XCTestCase {
         let (reset, _) = FlashcardScheduler.next(current: third, rating: .again, now: now)
         XCTAssertEqual(reset.repetitions, 0)
         XCTAssertEqual(reset.intervalDays, 0)
+    }
+
+    func testFavoritesBackupRoundTripAndDeepLinks() throws {
+        let records = [
+            FavoritesBackup.Record(
+                entryId: 42,
+                lang: "tg",
+                headword: "китоб",
+                preview: "книга; book",
+                addedAt: 1_731_000_000_000
+            ),
+            FavoritesBackup.Record(
+                entryId: 108,
+                lang: "ru",
+                headword: "здравствуйте",
+                preview: "салом",
+                addedAt: 1_731_000_001_000
+            ),
+        ]
+        let encoded = try FavoritesBackup.encodeRecords(records, exportedAtMs: 1_731_000_002_000)
+        let decoded = try FavoritesBackup.decodeRecords(from: encoded)
+        XCTAssertEqual(records, decoded)
+
+        XCTAssertEqual(
+            SpotlightIndexer.entryId(from: URL(string: "tajikdictionary://entry/42")!),
+            42
+        )
+        let activity = NSUserActivity(activityType: CSSearchableItemActionType)
+        activity.userInfo = [CSSearchableItemActivityIdentifier: "tj.tajikdictionary.entry.231"]
+        XCTAssertEqual(SpotlightIndexer.entryId(from: activity), 231)
     }
 }

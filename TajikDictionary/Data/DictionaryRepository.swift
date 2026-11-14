@@ -324,6 +324,33 @@ actor DictionaryRepository {
         return rows.first ?? ""
     }
 
+    func spotlightEntries(mode: DictionaryMode, limit: Int = 250) throws -> [SearchResult] {
+        try db.query(
+            """
+            SELECT e.id, e.lang, e.headword, e.pos,
+                   (SELECT group_concat(h, ', ') FROM (
+                        SELECT t2.headword AS h
+                        FROM translations t JOIN entries t2 ON t2.id = t.to_id
+                        WHERE t.from_id = e.id
+                          AND t2.lang = CASE WHEN e.lang = 'tg' THEN ? ELSE 'tg' END
+                        ORDER BY t.position LIMIT 4)) AS preview
+            FROM entries e
+            WHERE e.lang = 'tg'
+            ORDER BY e.frequency DESC, e.id ASC
+            LIMIT ?
+            """,
+            bindings: [.text(mode.partner.rawValue), .int64(Int64(limit))]
+        ) { row in
+            SearchResult(
+                id: row.int64(0),
+                language: Language(rawValue: row.string(1)) ?? .tajik,
+                headword: row.string(2),
+                pos: row.stringOrNil(3).flatMap(PartOfSpeech.init(rawValue:)),
+                preview: row.stringOrNil(4) ?? ""
+            )
+        }
+    }
+
     func info() throws -> DictionaryInfo {
         let pairs = try db.query("SELECT key, value FROM metadata") { ($0.string(0), $0.string(1)) }
         let dict = Dictionary(pairs, uniquingKeysWith: { _, latest in latest })
