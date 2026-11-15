@@ -7,6 +7,12 @@
         "tg" : { "stringUnit" : { "state" : "translated", "value" : "Луғат" } }
       }
     },
+    "Learn" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Учить" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Омӯзиш" } }
+      }
+    },
     "Saved" : {
       "localizations" : {
         "ru" : { "stringUnit" : { "state" : "translated", "value" : "Избранное" } },
@@ -53,6 +59,96 @@
       "localizations" : {
         "ru" : { "stringUnit" : { "state" : "translated", "value" : "Очистить" } },
         "tg" : { "stringUnit" : { "state" : "translated", "value" : "Пок кардан" } }
+      }
+    },
+    "Practice" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Тренировка" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Машқ" } }
+      }
+    },
+    "Smart Mix" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Умный микс" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Омехтаи ҳушманд" } }
+      }
+    },
+    "Word Trainer" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Тренажёр слов" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Бозии калимаомӯзӣ" } }
+      }
+    },
+    "Start 10-Word Round" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Начать раунд (10 слов)" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Оғози даври 10-калимагӣ" } }
+      }
+    },
+    "Classic Flip Flashcards" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Классические карточки" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Кортҳои оддӣ" } }
+      }
+    },
+    "Vocabulary Progress" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Прогресс словаря" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Пешрафти луғат" } }
+      }
+    },
+    "Achievements" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Достижения" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Дастовардҳо" } }
+      }
+    },
+    "Daily word goal" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Дневная цель" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Ҳадафи рӯзона" } }
+      }
+    },
+    "Today's goal" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Цель на сегодня" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Ҳадафи имрӯз" } }
+      }
+    },
+    "day streak" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "дн. подряд" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "рӯз пайдарпай" } }
+      }
+    },
+    "I don't know" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не знаю" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Намедонам" } }
+      }
+    },
+    "Already know" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Уже знаю" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Аллакай медонам" } }
+      }
+    },
+    "Got it, practice again" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Понятно, повторить позже" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Фаҳмидам, боз машқ мекунам" } }
+      }
+    },
+    "Round complete!" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Раунд завершён!" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Давр анҷом ёфт!" } }
+      }
+    },
+    "Play Another Round" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Сыграть ещё раунд" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Боз як давр бозӣ кардан" } }
       }
     }
   },

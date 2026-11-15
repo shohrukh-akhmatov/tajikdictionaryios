@@ -122,4 +122,98 @@ final class DictionaryTests: XCTestCase {
         activity.userInfo = [CSSearchableItemActivityIdentifier: "tj.tajikdictionary.entry.231"]
         XCTAssertEqual(SpotlightIndexer.entryId(from: activity), 231)
     }
+
+    func testWordGameQueueAndPeriodicScheduling() {
+        let now = Date(timeIntervalSince1970: 1_731_000_000)
+        let candidates = [
+            WordCardCandidate(entryId: 1, language: .tajik, headword: "салом", preview: "привет", pos: .interjection, frequency: 100, topic: "greetings", exampleTg: "Салом, дӯстам!", examplePartner: "Привет, друг!"),
+            WordCardCandidate(entryId: 2, language: .tajik, headword: "хӯрдан", preview: "есть", pos: .verb, frequency: 90, topic: "verbs", exampleTg: nil, examplePartner: nil),
+            WordCardCandidate(entryId: 3, language: .tajik, headword: "китоб", preview: "книга", pos: .noun, frequency: 80, topic: "education", exampleTg: nil, examplePartner: nil),
+            WordCardCandidate(entryId: 4, language: .tajik, headword: "об", preview: "вода", pos: .noun, frequency: 95, topic: "food", exampleTg: nil, examplePartner: nil),
+        ]
+
+        // Entry 2 is overdue, others are new; due word must appear in queue alongside high-frequency new words.
+        let overdue = WordProgressSnapshot(
+            entryId: 2,
+            masteryStage: 1,
+            stabilityDays: 1.0,
+            repetitions: 1,
+            lapses: 0,
+            lastReviewedAt: now.addingTimeInterval(-3 * WordGameEngine.daySeconds),
+            nextReviewAt: now.addingTimeInterval(-2 * WordGameEngine.daySeconds)
+        )
+        let queue = WordGameEngine.buildRoundQueue(
+            candidates: candidates,
+            progressById: [2: overdue],
+            now: now,
+            roundSize: 3
+        )
+        XCTAssertEqual(queue.count, 3)
+        XCTAssertTrue(queue.contains { $0.entryId == 2 })
+        XCTAssertTrue(queue.contains { $0.entryId == 1 })
+
+        // Fast correct answer grows stability & advances mastery stage.
+        let (good, xpGood, newlyLearned) = WordGameEngine.evaluateAnswer(
+            existing: nil,
+            entryId: 1,
+            isCorrect: true,
+            usedHintOrNearMiss: false,
+            responseMs: 2_500,
+            wasRetriedInRound: false,
+            now: now
+        )
+        XCTAssertTrue(newlyLearned)
+        XCTAssertEqual(xpGood, 15)
+        XCTAssertEqual(good.masteryStage, 1)
+        XCTAssertGreaterThan(good.stabilityDays, 1.0)
+
+        // Wrong answer drops stability and increments lapses, and re-insert offset stays bounded.
+        let (missed, xpMissed, _) = WordGameEngine.evaluateAnswer(
+            existing: good,
+            entryId: 1,
+            isCorrect: false,
+            usedHintOrNearMiss: false,
+            responseMs: 6_000,
+            wasRetriedInRound: false,
+            now: now
+        )
+        XCTAssertEqual(xpMissed, 0)
+        XCTAssertEqual(missed.lapses, 1)
+        XCTAssertLessThan(missed.stabilityDays, good.stabilityDays)
+        XCTAssertEqual(WordGameEngine.reinsertIndex(remainingCount: 5), 3)
+        XCTAssertEqual(WordGameEngine.reinsertIndex(remainingCount: 1), 1)
+
+        // Tajik letter folding near-miss detection.
+        XCTAssertEqual(WordGameEngine.checkTypedAnswer(input: "хӯрдан", target: "хӯрдан"), .exact)
+        XCTAssertEqual(WordGameEngine.checkTypedAnswer(input: "хурдан", target: "хӯрдан"), .tajikLetterNearMiss(target: "хӯрдан"))
+        XCTAssertEqual(WordGameEngine.checkTypedAnswer(input: "китоб", target: "хӯрдан"), .wrong)
+    }
+
+    func testWordGameClozeAndSummaryStreak() {
+        let cloze = WordGameEngine.makeClozeSentence(exampleTg: "Салом, дӯстам!", targetHeadword: "салом")
+        XCTAssertEqual(cloze, "____, дӯстам!")
+
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(secondsFromGMT: 0)!
+        let today = Date(timeIntervalSince1970: 1_731_628_800) // 2024-11-15
+        let yesterday = today.addingTimeInterval(-WordGameEngine.daySeconds)
+
+        let logs = [
+            DailyStudySnapshot(dateKey: WordGameEngine.dateKey(for: yesterday, calendar: cal), wordsReviewed: 10, wordsLearned: 4, xpEarned: 110, roundsCompleted: 1),
+            DailyStudySnapshot(dateKey: WordGameEngine.dateKey(for: today, calendar: cal), wordsReviewed: 5, wordsLearned: 2, xpEarned: 60, roundsCompleted: 0),
+        ]
+        let summary = WordGameEngine.computeSummary(
+            progress: [
+                WordProgressSnapshot(entryId: 1, masteryStage: 4, stabilityDays: 14, lastReviewedAt: today, nextReviewAt: today.addingTimeInterval(14 * WordGameEngine.daySeconds)),
+            ],
+            logs: logs,
+            dailyGoal: 10,
+            now: today,
+            calendar: cal
+        )
+        XCTAssertEqual(summary.currentStreakDays, 2)
+        XCTAssertEqual(summary.totalXp, 170)
+        XCTAssertEqual(summary.level, 2)
+        XCTAssertEqual(summary.masteredCount, 1)
+    }
 }

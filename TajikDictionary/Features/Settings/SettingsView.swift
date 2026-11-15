@@ -42,6 +42,13 @@ struct SettingsView: View {
                 }
 
                 Section(String(localized: "Learning")) {
+                    Picker(String(localized: "Daily word goal"), selection: $settings.dailyGoal) {
+                        ForEach([5, 10, 15, 20], id: \.self) { goal in
+                            Text("\(goal)").tag(goal)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
                     NavigationLink {
                         StudyView()
                     } label: {

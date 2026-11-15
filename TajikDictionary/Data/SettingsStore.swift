@@ -59,6 +59,7 @@ final class SettingsStore {
         static let theme = "appearance_theme"
         static let speechRate = "speech_rate"
         static let fontScale = "font_scale"
+        static let dailyGoal = "daily_goal"
     }
 
     var mode: DictionaryMode {
@@ -78,6 +79,10 @@ final class SettingsStore {
         didSet { defaults.set(fontScale.rawValue, forKey: Keys.fontScale) }
     }
 
+    var dailyGoal: Int {
+        didSet { defaults.set(dailyGoal, forKey: Keys.dailyGoal) }
+    }
+
     var avSpeechRate: Float {
         slowSpeech ? 0.38 : 0.5
     }
@@ -87,9 +92,11 @@ final class SettingsStore {
         let savedMode = defaults.string(forKey: Keys.mode).flatMap(DictionaryMode.init(rawValue:)) ?? .tjRu
         let savedTheme = defaults.string(forKey: Keys.theme).flatMap(ThemeSetting.init(rawValue:)) ?? .system
         let savedScale = defaults.string(forKey: Keys.fontScale).flatMap(FontScaleSetting.init(rawValue:)) ?? .medium
+        let savedGoal = defaults.integer(forKey: Keys.dailyGoal)
         self.mode = savedMode
         self.theme = savedTheme
         self.slowSpeech = defaults.bool(forKey: Keys.speechRate)
         self.fontScale = savedScale
+        self.dailyGoal = savedGoal > 0 ? savedGoal : 10
     }
 }

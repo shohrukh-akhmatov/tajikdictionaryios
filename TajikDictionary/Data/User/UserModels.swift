@@ -43,7 +43,7 @@ final class HistoryItem {
     static let maxItems = 200
 }
 
-/// SM-2 flashcard review state persisted separately from the read-only dictionary DB.
+/// SM-2 & Lingvist-style periodic flashcard review state persisted separately from the read-only dictionary DB.
 @Model
 final class FlashcardProgress {
     @Attribute(.unique) var entryId: Int64
@@ -54,6 +54,11 @@ final class FlashcardProgress {
     var intervalDays: Int
     var easeFactor: Double
     var nextReviewAt: Date
+    var masteryStage: Int = 0
+    var stabilityDays: Double = 0
+    var lapses: Int = 0
+    var lastReviewedAt: Date? = nil
+    var isKnownSkipped: Bool = false
 
     init(
         entryId: Int64,
@@ -63,7 +68,12 @@ final class FlashcardProgress {
         repetitions: Int = 0,
         intervalDays: Int = 0,
         easeFactor: Double = 2.5,
-        nextReviewAt: Date = .now
+        nextReviewAt: Date = .now,
+        masteryStage: Int = 0,
+        stabilityDays: Double = 0,
+        lapses: Int = 0,
+        lastReviewedAt: Date? = nil,
+        isKnownSkipped: Bool = false
     ) {
         self.entryId = entryId
         self.lang = lang
@@ -73,5 +83,57 @@ final class FlashcardProgress {
         self.intervalDays = intervalDays
         self.easeFactor = easeFactor
         self.nextReviewAt = nextReviewAt
+        self.masteryStage = masteryStage
+        self.stabilityDays = stabilityDays
+        self.lapses = lapses
+        self.lastReviewedAt = lastReviewedAt
+        self.isKnownSkipped = isKnownSkipped
+    }
+
+    var snapshot: WordProgressSnapshot {
+        WordProgressSnapshot(
+            entryId: entryId,
+            masteryStage: masteryStage,
+            stabilityDays: stabilityDays,
+            repetitions: repetitions,
+            lapses: lapses,
+            lastReviewedAt: lastReviewedAt,
+            nextReviewAt: nextReviewAt,
+            isKnownSkipped: isKnownSkipped
+        )
+    }
+}
+
+/// Daily study activity log for streaks, daily goals, and XP progression.
+@Model
+final class DailyStudyLog {
+    @Attribute(.unique) var dateKey: String
+    var wordsReviewed: Int
+    var wordsLearned: Int
+    var xpEarned: Int
+    var roundsCompleted: Int
+
+    init(
+        dateKey: String,
+        wordsReviewed: Int = 0,
+        wordsLearned: Int = 0,
+        xpEarned: Int = 0,
+        roundsCompleted: Int = 0
+    ) {
+        self.dateKey = dateKey
+        self.wordsReviewed = wordsReviewed
+        self.wordsLearned = wordsLearned
+        self.xpEarned = xpEarned
+        self.roundsCompleted = roundsCompleted
+    }
+
+    var snapshot: DailyStudySnapshot {
+        DailyStudySnapshot(
+            dateKey: dateKey,
+            wordsReviewed: wordsReviewed,
+            wordsLearned: wordsLearned,
+            xpEarned: xpEarned,
+            roundsCompleted: roundsCompleted
+        )
     }
 }

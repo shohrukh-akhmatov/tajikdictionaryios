@@ -6,6 +6,7 @@ struct TopicEntriesView: View {
     @Environment(\.dictionaryRepository) private var repository
     @Environment(SettingsStore.self) private var settings
     @State private var entries: [SearchResult] = []
+    @State private var showGame = false
 
     var body: some View {
         List(entries) { row in
@@ -24,13 +25,16 @@ struct TopicEntriesView: View {
         .toolbar {
             if !entries.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        StudyView(initialTopic: topic)
+                    Button {
+                        showGame = true
                     } label: {
-                        Label(String(localized: "Study"), systemImage: "graduationcap")
+                        Label(String(localized: "Practice"), systemImage: "play.fill")
                     }
                 }
             }
+        }
+        .fullScreenCover(isPresented: $showGame) {
+            WordGameView(source: .topic(topic))
         }
         .task(id: settings.mode) {
             entries = (try? await repository.entries(inTopic: topic, mode: settings.mode)) ?? []

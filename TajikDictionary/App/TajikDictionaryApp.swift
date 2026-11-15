@@ -17,6 +17,7 @@ extension EnvironmentValues {
 
 private enum AppTab: Hashable {
     case dictionary
+    case learn
     case saved
     case history
     case settings
@@ -35,6 +36,12 @@ struct RootView: View {
                     Label(String(localized: "Dictionary"), systemImage: "character.book.closed")
                 }
                 .tag(AppTab.dictionary)
+
+            LearnView()
+                .tabItem {
+                    Label(String(localized: "Learn"), systemImage: "graduationcap")
+                }
+                .tag(AppTab.learn)
 
             FavoritesView()
                 .tabItem {
@@ -86,6 +93,6 @@ struct TajikDictionaryApp: App {
                 .environment(settings)
                 .environment(\.dictionaryRepository, repository)
         }
-        .modelContainer(for: [FavoriteItem.self, HistoryItem.self, FlashcardProgress.self])
+        .modelContainer(for: [FavoriteItem.self, HistoryItem.self, FlashcardProgress.self, DailyStudyLog.self])
     }
 }

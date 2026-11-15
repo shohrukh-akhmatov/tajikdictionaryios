@@ -4,6 +4,7 @@ import SwiftUI
 struct FavoritesView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \FavoriteItem.addedAt, order: .reverse) private var favorites: [FavoriteItem]
+    @State private var showGame = false
 
     var body: some View {
         NavigationStack {
@@ -39,13 +40,16 @@ struct FavoritesView: View {
             .toolbar {
                 if !favorites.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink {
-                            StudyView()
+                        Button {
+                            showGame = true
                         } label: {
-                            Label(String(localized: "Study"), systemImage: "graduationcap")
+                            Label(String(localized: "Practice"), systemImage: "play.fill")
                         }
                     }
                 }
+            }
+            .fullScreenCover(isPresented: $showGame) {
+                WordGameView(source: .saved)
             }
             .navigationDestination(for: Int64.self) { entryId in
                 EntryDetailView(entryId: entryId)

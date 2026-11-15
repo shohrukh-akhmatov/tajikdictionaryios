@@ -23,23 +23,31 @@ actor DictionaryRepository {
         }
 
         let direct = try prefixSearch(key: key, languages: languages, mode: mode, limit: limit)
-        if !direct.isEmpty {
+        let hasExactDirect = direct.contains { TextNormalizer.searchKey($0.headword) == key }
+        if !direct.isEmpty, hasExactDirect {
             return SearchOutcome(query: rawQuery, results: direct, searchedLanguages: languages, suggestedMode: nil, matchType: .direct)
         }
 
         // Phase 1 fallback 1: morphological stem hints (exact lemma match)
+        // Also checked when `direct` only had longer prefix hits (e.g. "китобҳо" vs "китобхона").
         let stems = WordStemmer.candidateStems(for: key, languages: languages)
+            .filter { !direct.isEmpty ? $0.count >= 3 : true }
         if !stems.isEmpty {
             let stemResults = try exactMatches(keys: stems, languages: languages, mode: mode, limit: limit)
             if !stemResults.isEmpty {
+                let stemIds = Set(stemResults.map(\.id))
+                let combined = Array((stemResults + direct.filter { !stemIds.contains($0.id) }).prefix(limit))
                 return SearchOutcome(
                     query: rawQuery,
-                    results: stemResults,
+                    results: combined,
                     searchedLanguages: languages,
                     suggestedMode: nil,
                     matchType: .stem
                 )
             }
+        }
+        if !direct.isEmpty {
+            return SearchOutcome(query: rawQuery, results: direct, searchedLanguages: languages, suggestedMode: nil, matchType: .direct)
         }
 
         // Phase 1 fallback 2: bounded edit-distance typo tolerance
@@ -355,5 +363,88 @@ actor DictionaryRepository {
         let pairs = try db.query("SELECT key, value FROM metadata") { ($0.string(0), $0.string(1)) }
         let dict = Dictionary(pairs, uniquingKeysWith: { _, latest in latest })
         return DictionaryInfo(dataVersion: dict["data_version"] ?? "", stats: dict["stats"] ?? "")
+    }
+
+    /// Returns frequency-ordered Tajik candidates (plus optional cloze example) for the word-teaching game.
+    func learningCandidates(topic: String? = nil, mode: DictionaryMode, limit: Int = 500) throws -> [WordCardCandidate] {
+        let partnerCol = mode.partner == .russian ? "ex.ru" : "ex.en"
+        let topicClause = topic == nil ? "" : "AND e.topic = ?"
+        let sql = """
+        SELECT e.id, e.lang, e.headword, e.pos, e.frequency, e.topic,
+               (SELECT group_concat(h, ', ') FROM (
+                    SELECT t2.headword AS h
+                    FROM translations t JOIN entries t2 ON t2.id = t.to_id
+                    WHERE t.from_id = e.id AND t2.lang = ?
+                    ORDER BY t.position LIMIT 4)) AS preview,
+               (SELECT ex.tg FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_tg,
+               (SELECT \(partnerCol) FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_partner
+        FROM entries e
+        WHERE e.lang = 'tg' \(topicClause)
+        ORDER BY e.frequency DESC, e.id ASC
+        LIMIT ?
+        """
+        var bindings: [SQLiteValue] = [.text(mode.partner.rawValue)]
+        if let topic {
+            bindings.append(.text(topic))
+        }
+        bindings.append(.int64(Int64(limit)))
+
+        return try db.query(sql, bindings: bindings) { row in
+            WordCardCandidate(
+                entryId: row.int64(0),
+                language: Language(rawValue: row.string(1)) ?? .tajik,
+                headword: row.string(2),
+                preview: row.stringOrNil(6) ?? "",
+                pos: row.stringOrNil(3).flatMap(PartOfSpeech.init(rawValue:)),
+                frequency: row.int(4),
+                topic: row.stringOrNil(5),
+                exampleTg: row.stringOrNil(7),
+                examplePartner: row.stringOrNil(8)
+            )
+        }
+    }
+
+    /// Fetches candidates for specific entry IDs (e.g. Favorites deck) in partner mode.
+    func learningCandidates(forEntryIds ids: [Int64], mode: DictionaryMode) throws -> [WordCardCandidate] {
+        guard !ids.isEmpty else { return [] }
+        let partnerCol = mode.partner == .russian ? "ex.ru" : "ex.en"
+        let placeholders = ids.map { _ in "?" }.joined(separator: ",")
+        let sql = """
+        SELECT e.id, e.lang, e.headword, e.pos, e.frequency, e.topic,
+               (SELECT group_concat(h, ', ') FROM (
+                    SELECT t2.headword AS h
+                    FROM translations t JOIN entries t2 ON t2.id = t.to_id
+                    WHERE t.from_id = e.id
+                      AND t2.lang = CASE WHEN e.lang = 'tg' THEN ? ELSE 'tg' END
+                    ORDER BY t.position LIMIT 4)) AS preview,
+               (SELECT ex.tg FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_tg,
+               (SELECT \(partnerCol) FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_partner
+        FROM entries e
+        WHERE e.id IN (\(placeholders))
+        ORDER BY e.frequency DESC, e.id ASC
+        """
+        var bindings: [SQLiteValue] = [.text(mode.partner.rawValue)]
+        ids.forEach { bindings.append(.int64($0)) }
+
+        return try db.query(sql, bindings: bindings) { row in
+            WordCardCandidate(
+                entryId: row.int64(0),
+                language: Language(rawValue: row.string(1)) ?? .tajik,
+                headword: row.string(2),
+                preview: row.stringOrNil(6) ?? "",
+                pos: row.stringOrNil(3).flatMap(PartOfSpeech.init(rawValue:)),
+                frequency: row.int(4),
+                topic: row.stringOrNil(5),
+                exampleTg: row.stringOrNil(7),
+                examplePartner: row.stringOrNil(8)
+            )
+        }
+    }
+
+    func topTajikHeadwords(limit: Int = 50) throws -> [String] {
+        try db.query(
+            "SELECT headword FROM entries WHERE lang = 'tg' ORDER BY frequency DESC, id ASC LIMIT ?",
+            bindings: [.int64(Int64(limit))]
+        ) { $0.string(0) }
     }
 }
