@@ -104,7 +104,7 @@ final class FlashcardProgress {
     }
 }
 
-/// Daily study activity log for streaks, daily goals, and XP progression.
+/// Daily study activity log for streaks, daily goals, study time, and XP progression.
 @Model
 final class DailyStudyLog {
     @Attribute(.unique) var dateKey: String
@@ -112,19 +112,25 @@ final class DailyStudyLog {
     var wordsLearned: Int
     var xpEarned: Int
     var roundsCompleted: Int
+    var studySeconds: Int = 0
+    var correctReviews: Int = 0
 
     init(
         dateKey: String,
         wordsReviewed: Int = 0,
         wordsLearned: Int = 0,
         xpEarned: Int = 0,
-        roundsCompleted: Int = 0
+        roundsCompleted: Int = 0,
+        studySeconds: Int = 0,
+        correctReviews: Int = 0
     ) {
         self.dateKey = dateKey
         self.wordsReviewed = wordsReviewed
         self.wordsLearned = wordsLearned
         self.xpEarned = xpEarned
         self.roundsCompleted = roundsCompleted
+        self.studySeconds = studySeconds
+        self.correctReviews = correctReviews
     }
 
     var snapshot: DailyStudySnapshot {
@@ -133,7 +139,9 @@ final class DailyStudyLog {
             wordsReviewed: wordsReviewed,
             wordsLearned: wordsLearned,
             xpEarned: xpEarned,
-            roundsCompleted: roundsCompleted
+            roundsCompleted: roundsCompleted,
+            studySeconds: studySeconds,
+            correctReviews: correctReviews
         )
     }
 }

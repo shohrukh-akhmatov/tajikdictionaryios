@@ -216,4 +216,43 @@ final class DictionaryTests: XCTestCase {
         XCTAssertEqual(summary.level, 2)
         XCTAssertEqual(summary.masteredCount, 1)
     }
+
+    func testZipfTextCoveragePlacementAndStudyAnalytics() {
+        XCTAssertEqual(WordGameEngine.textRecognitionPercent(effectiveKnownWords: 0), 0)
+        let pct100 = WordGameEngine.textRecognitionPercent(effectiveKnownWords: 100)
+        let pct500 = WordGameEngine.textRecognitionPercent(effectiveKnownWords: 500)
+        let pct2000 = WordGameEngine.textRecognitionPercent(effectiveKnownWords: 2000)
+        XCTAssertTrue(pct100 > 25 && pct100 < 40)
+        XCTAssertTrue(pct500 > pct100 && pct500 < pct2000)
+        XCTAssertTrue(pct2000 > 80)
+
+        let tier1 = WordCardCandidate(entryId: 10, language: .tajik, headword: "салом", preview: "hello", pos: .interjection, frequency: 95, topic: nil, exampleTg: nil, examplePartner: nil)
+        let tier2 = WordCardCandidate(entryId: 11, language: .tajik, headword: "китоб", preview: "book", pos: .noun, frequency: 84, topic: nil, exampleTg: nil, examplePartner: nil)
+        let tier3 = WordCardCandidate(entryId: 12, language: .tajik, headword: "андеша", preview: "thought", pos: .noun, frequency: 74, topic: nil, exampleTg: nil, examplePartner: nil)
+        let tier4 = WordCardCandidate(entryId: 13, language: .tajik, headword: "камолот", preview: "perfection", pos: .noun, frequency: 52, topic: nil, exampleTg: nil, examplePartner: nil)
+
+        let answers = [
+            PlacementAnswer(question: PlacementQuestion(candidate: tier1, tier: 1, choices: []), isCorrect: true),
+            PlacementAnswer(question: PlacementQuestion(candidate: tier2, tier: 2, choices: []), isCorrect: true),
+            PlacementAnswer(question: PlacementQuestion(candidate: tier3, tier: 3, choices: []), isCorrect: false),
+            PlacementAnswer(question: PlacementQuestion(candidate: tier4, tier: 4, choices: []), isCorrect: false),
+        ]
+        let placement = WordGameEngine.evaluatePlacement(answers: answers)
+        XCTAssertEqual(placement.cefrLevel, .a2)
+        XCTAssertEqual(placement.knownEntryIds, [10, 11])
+        XCTAssertEqual(placement.focusEntryIds, [12, 13])
+
+        XCTAssertEqual(WordGameEngine.formatStudyDuration(seconds: 45), "45s")
+        XCTAssertEqual(WordGameEngine.formatStudyDuration(seconds: 1800), "30m")
+        XCTAssertEqual(WordGameEngine.formatStudyDuration(seconds: 5400), "1h 30m")
+
+        // Frontier queue prioritizes words <= targetMaxFrequency (e.g. 82 for A2).
+        let queue = WordGameEngine.buildRoundQueue(
+            candidates: [tier1, tier2, tier3, tier4],
+            progressById: [:],
+            roundSize: 2,
+            targetMaxFrequency: 82
+        )
+        XCTAssertEqual(queue.map(\.entryId), [12, 13])
+    }
 }

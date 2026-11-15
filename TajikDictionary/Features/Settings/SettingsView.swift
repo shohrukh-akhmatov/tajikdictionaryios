@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var isExporting = false
     @State private var isImporting = false
     @State private var backupMessage: String?
+    @State private var showPlacementTest = false
 
     var body: some View {
         @Bindable var settings = settings
@@ -48,6 +49,15 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+
+                    Button {
+                        showPlacementTest = true
+                    } label: {
+                        LabeledContent(
+                            String(localized: "Level Test"),
+                            value: settings.placementLevel.map { "\($0.rawValue) · \($0.title)" } ?? String(localized: "Not taken")
+                        )
+                    }
 
                     NavigationLink {
                         StudyView()
@@ -103,6 +113,9 @@ struct SettingsView: View {
             .navigationTitle(String(localized: "Settings"))
             .task {
                 info = try? await repository.info()
+            }
+            .fullScreenCover(isPresented: $showPlacementTest) {
+                PlacementTestView()
             }
             .fileExporter(
                 isPresented: $isExporting,

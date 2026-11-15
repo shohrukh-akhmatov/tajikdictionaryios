@@ -60,6 +60,10 @@ final class SettingsStore {
         static let speechRate = "speech_rate"
         static let fontScale = "font_scale"
         static let dailyGoal = "daily_goal"
+        static let placementLevel = "placement_level"
+        static let placementCeilingFreq = "placement_ceiling_freq"
+        static let placementBaselineWords = "placement_baseline_words"
+        static let hasCompletedPlacement = "has_completed_placement"
     }
 
     var mode: DictionaryMode {
@@ -83,6 +87,26 @@ final class SettingsStore {
         didSet { defaults.set(dailyGoal, forKey: Keys.dailyGoal) }
     }
 
+    var placementLevelRaw: String {
+        didSet { defaults.set(placementLevelRaw, forKey: Keys.placementLevel) }
+    }
+
+    var placementCeilingFreq: Int {
+        didSet { defaults.set(placementCeilingFreq, forKey: Keys.placementCeilingFreq) }
+    }
+
+    var placementBaselineWords: Int {
+        didSet { defaults.set(placementBaselineWords, forKey: Keys.placementBaselineWords) }
+    }
+
+    var hasCompletedPlacement: Bool {
+        didSet { defaults.set(hasCompletedPlacement, forKey: Keys.hasCompletedPlacement) }
+    }
+
+    var placementLevel: CefrLevel? {
+        hasCompletedPlacement ? CefrLevel(rawValue: placementLevelRaw) : nil
+    }
+
     var avSpeechRate: Float {
         slowSpeech ? 0.38 : 0.5
     }
@@ -93,10 +117,22 @@ final class SettingsStore {
         let savedTheme = defaults.string(forKey: Keys.theme).flatMap(ThemeSetting.init(rawValue:)) ?? .system
         let savedScale = defaults.string(forKey: Keys.fontScale).flatMap(FontScaleSetting.init(rawValue:)) ?? .medium
         let savedGoal = defaults.integer(forKey: Keys.dailyGoal)
+        let savedCeiling = defaults.integer(forKey: Keys.placementCeilingFreq)
         self.mode = savedMode
         self.theme = savedTheme
         self.slowSpeech = defaults.bool(forKey: Keys.speechRate)
         self.fontScale = savedScale
         self.dailyGoal = savedGoal > 0 ? savedGoal : 10
+        self.placementLevelRaw = defaults.string(forKey: Keys.placementLevel) ?? CefrLevel.a0.rawValue
+        self.placementCeilingFreq = savedCeiling > 0 ? savedCeiling : 100
+        self.placementBaselineWords = defaults.integer(forKey: Keys.placementBaselineWords)
+        self.hasCompletedPlacement = defaults.bool(forKey: Keys.hasCompletedPlacement)
+    }
+
+    func applyPlacement(_ result: PlacementResult) {
+        placementLevelRaw = result.cefrLevel.rawValue
+        placementCeilingFreq = result.cefrLevel.recommendedCeilingFrequency
+        placementBaselineWords = result.cefrLevel.baselineKnownWords
+        hasCompletedPlacement = true
     }
 }

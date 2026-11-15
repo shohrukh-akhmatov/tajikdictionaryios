@@ -512,10 +512,33 @@ struct WordGameView: View {
         resetCardInputs()
 
         let mode = settings.mode
+        let progressById = Dictionary(uniqueKeysWithValues: progress.map { ($0.entryId, $0.snapshot) })
+        let ceilingFreq = settings.hasCompletedPlacement ? settings.placementCeilingFreq : 100
         let pool: [WordCardCandidate]
         switch source {
         case .smartMix:
-            pool = (try? await repository.learningCandidates(topic: nil, mode: mode, limit: 450)) ?? []
+            let frontierPool = (try? await repository.learningCandidates(
+                topic: nil,
+                mode: mode,
+                maxFrequency: ceilingFreq,
+                limit: 450
+            )) ?? []
+            let activeIds = progress.filter { !$0.isKnownSkipped && $0.lastReviewedAt != nil }.map(\.entryId)
+            let activeCandidates = (try? await repository.learningCandidates(forEntryIds: activeIds, mode: mode)) ?? []
+            var seen = Set<Int64>()
+            var merged: [WordCardCandidate] = []
+            for item in activeCandidates + frontierPool {
+                if seen.insert(item.entryId).inserted {
+                    merged.append(item)
+                }
+            }
+            if merged.count < WordGameEngine.defaultRoundSize, ceilingFreq < 100 {
+                let broad = (try? await repository.learningCandidates(topic: nil, mode: mode, maxFrequency: 100, limit: 200)) ?? []
+                for item in broad where seen.insert(item.entryId).inserted {
+                    merged.append(item)
+                }
+            }
+            pool = merged
         case .topic(let topic):
             pool = (try? await repository.learningCandidates(topic: topic, mode: mode, limit: 450)) ?? []
         case .saved:
@@ -524,12 +547,12 @@ struct WordGameView: View {
         }
 
         let fallbackDistractors = (try? await repository.topTajikHeadwords(limit: 60)) ?? []
-        let progressById = Dictionary(uniqueKeysWithValues: progress.map { ($0.entryId, $0.snapshot) })
         let selected = WordGameEngine.buildRoundQueue(
             candidates: pool,
             progressById: progressById,
             now: .now,
-            roundSize: WordGameEngine.defaultRoundSize
+            roundSize: WordGameEngine.defaultRoundSize,
+            targetMaxFrequency: source == .smartMix ? ceilingFreq : nil
         )
         let items = WordGameEngine.makeRoundItems(
             selected: selected,
@@ -739,17 +762,22 @@ struct WordGameView: View {
         }
 
         let key = WordGameEngine.dateKey(for: now)
+        let activeSecs = Int(min(60, max(1, (responseMs + 500) / 1000)))
         if let today = dailyLogs.first(where: { $0.dateKey == key }) {
             today.wordsReviewed += 1
             if newlyLearned { today.wordsLearned += 1 }
             today.xpEarned += xpAwarded
+            today.studySeconds += activeSecs
+            if isCorrect { today.correctReviews += 1 }
         } else {
             modelContext.insert(DailyStudyLog(
                 dateKey: key,
                 wordsReviewed: 1,
                 wordsLearned: newlyLearned ? 1 : 0,
                 xpEarned: xpAwarded,
-                roundsCompleted: 0
+                roundsCompleted: 0,
+                studySeconds: activeSecs,
+                correctReviews: isCorrect ? 1 : 0
             ))
         }
 

@@ -10,20 +10,29 @@ struct LearnView: View {
     @Query(sort: \FavoriteItem.addedAt, order: .reverse) private var favorites: [FavoriteItem]
 
     @State private var topics: [TopicCount] = []
+    @State private var lexiconStats: LexiconStats = .fallback
     @State private var selectedSource: GameDeckSource = .smartMix
     @State private var activeGameSource: GameDeckSource?
+    @State private var showPlacementTest = false
 
     private var summary: GamificationSummary {
         WordGameEngine.computeSummary(
             progress: progress.map(\.snapshot),
             logs: dailyLogs.map(\.snapshot),
-            dailyGoal: settings.dailyGoal
+            dailyGoal: settings.dailyGoal,
+            lexiconStats: lexiconStats,
+            placementLevel: settings.placementLevel,
+            placementBaselineWords: settings.placementBaselineWords
         )
     }
 
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    textRecognitionHeroCard
+                }
+
                 Section {
                     streakAndLevelCard
                 }
@@ -86,6 +95,38 @@ struct LearnView: View {
                     .padding(.vertical, 4)
                 }
 
+                Section(String(localized: "Study Analytics")) {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                        analyticsTile(
+                            value: "\(summary.estimatedKnownWords)",
+                            label: String(localized: "Words known"),
+                            icon: "text.book.closed.fill",
+                            color: .blue
+                        )
+                        analyticsTile(
+                            value: WordGameEngine.formatStudyDuration(seconds: summary.totalStudySeconds),
+                            label: String(localized: "Time studied"),
+                            icon: "clock.fill",
+                            color: .purple
+                        )
+                        analyticsTile(
+                            value: "\(summary.activeDaysCount)",
+                            label: String(localized: "Active days"),
+                            icon: "calendar",
+                            color: .orange
+                        )
+                        analyticsTile(
+                            value: "\(summary.overallAccuracyPercent)%",
+                            label: "\(summary.totalReviews) \(String(localized: "reviews"))",
+                            icon: "target",
+                            color: .green
+                        )
+                    }
+                    .padding(.vertical, 4)
+
+                    sevenDayChart
+                }
+
                 Section(String(localized: "Vocabulary Progress")) {
                     HStack(spacing: 12) {
                         vocabStat(count: summary.encounteredCount, label: String(localized: "Seen"), color: .blue)
@@ -94,17 +135,21 @@ struct LearnView: View {
                     }
                     .padding(.vertical, 4)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text(String(localized: "Lexicon coverage"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Text("\(summary.encounteredCount) / 8,041")
-                                .font(.caption.monospacedDigit())
-                                .foregroundStyle(.secondary)
+                    ForEach(summary.tierBreakdown) { tier in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(tier.label)
+                                    .font(.caption.weight(.medium))
+                                Spacer()
+                                Text("\(tier.knownCount) / \(tier.totalCount)")
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                            }
+                            ProgressView(
+                                value: Double(tier.knownCount),
+                                total: Double(max(1, tier.totalCount))
+                            )
                         }
-                        ProgressView(value: Double(summary.encounteredCount), total: 8041.0)
                     }
                 }
 
@@ -142,9 +187,13 @@ struct LearnView: View {
             .navigationTitle(String(localized: "Learn"))
             .task {
                 topics = (try? await repository.topics()) ?? []
+                lexiconStats = (try? await repository.lexiconStats()) ?? .fallback
             }
             .fullScreenCover(item: $activeGameSource) { source in
                 WordGameView(source: source)
+            }
+            .fullScreenCover(isPresented: $showPlacementTest) {
+                PlacementTestView()
             }
         }
     }
@@ -152,6 +201,114 @@ struct LearnView: View {
     private var selectedTopicName: String? {
         if case .topic(let name) = selectedSource { return name }
         return nil
+    }
+
+    private var textRecognitionHeroCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .stroke(Color.secondary.opacity(0.2), lineWidth: 9)
+                    Circle()
+                        .trim(from: 0, to: min(1.0, summary.textRecognitionPercent / 100.0))
+                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    VStack(spacing: 0) {
+                        Text(String(format: "%.0f%%", summary.textRecognitionPercent))
+                            .font(.title3.bold())
+                        Text(summary.cefrLevel.rawValue)
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
+                .frame(width: 78, height: 78)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(String(localized: "Everyday Tajik recognized"))
+                        .font(.headline)
+                    Text("\(summary.cefrLevel.rawValue) · \(summary.cefrLevel.title)")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.accentColor)
+                    Text("\(summary.estimatedKnownWords) / \(summary.totalLexiconCount) \(String(localized: "words"))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+            }
+
+            Button {
+                showPlacementTest = true
+            } label: {
+                HStack {
+                    Image(systemName: "slider.horizontal.3")
+                    Text(
+                        settings.hasCompletedPlacement
+                            ? String(localized: "Retake Level Placement Test")
+                            : String(localized: "Check Your Level (1-min Test)")
+                    )
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                }
+                .font(.subheadline.weight(.medium))
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(.vertical, 6)
+    }
+
+    private var sevenDayChart: some View {
+        let maxCount = max(summary.dailyGoal, summary.recent7Days.map(\.wordsReviewed).max() ?? 1)
+        return VStack(alignment: .leading, spacing: 8) {
+            Text(String(localized: "Last 7 days"))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            HStack(alignment: .bottom, spacing: 8) {
+                ForEach(summary.recent7Days) { day in
+                    let fraction = max(0.08, Double(day.wordsReviewed) / Double(max(1, maxCount)))
+                    VStack(spacing: 4) {
+                        Text("\(day.wordsReviewed)")
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .opacity(day.wordsReviewed > 0 ? 1 : 0)
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .fill(
+                                day.metGoal
+                                    ? Color.green
+                                    : (day.wordsReviewed > 0 ? Color.accentColor : Color.secondary.opacity(0.2))
+                            )
+                            .frame(height: 54 * fraction)
+                        Text(day.shortLabel)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: 88, alignment: .bottom)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func analyticsTile(value: String, label: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(color)
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.headline.monospacedDigit())
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(10)
+        .background(color.opacity(0.09), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var streakAndLevelCard: some View {

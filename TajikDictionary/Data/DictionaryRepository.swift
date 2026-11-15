@@ -47,6 +47,25 @@ actor DictionaryRepository {
             }
         }
         if !direct.isEmpty {
+            // If every prefix hit is a much longer word (4+ extra chars) and a 1-edit typo match exists
+            // (e.g. "салам" vs prefix "саламандра" when user meant "салом"), surface the close typo match.
+            let onlyLongPrefixHits = key.count >= 5 && direct.allSatisfy {
+                TextNormalizer.searchKey($0.headword).count >= key.count + 4
+            }
+            if onlyLongPrefixHits {
+                let closeFuzzy = try fuzzySearch(key: key, languages: languages, mode: mode, limit: 20, maxDistanceOverride: 1)
+                if !closeFuzzy.isEmpty {
+                    let fuzzyIds = Set(closeFuzzy.map(\.id))
+                    let combined = Array((closeFuzzy + direct.filter { !fuzzyIds.contains($0.id) }).prefix(limit))
+                    return SearchOutcome(
+                        query: rawQuery,
+                        results: combined,
+                        searchedLanguages: languages,
+                        suggestedMode: nil,
+                        matchType: .fuzzy
+                    )
+                }
+            }
             return SearchOutcome(query: rawQuery, results: direct, searchedLanguages: languages, suggestedMode: nil, matchType: .direct)
         }
 
@@ -151,9 +170,10 @@ actor DictionaryRepository {
         key: String,
         languages: Set<Language>,
         mode: DictionaryMode,
-        limit: Int
+        limit: Int,
+        maxDistanceOverride: Int? = nil
     ) throws -> [SearchResult] {
-        let maxDist = key.count >= 5 ? 2 : 1
+        let maxDist = maxDistanceOverride ?? (key.count >= 5 ? 2 : 1)
         let minLen = max(2, key.count - maxDist)
         let maxLen = key.count + maxDist
         let orderedLangs = languages.sorted { $0.rawValue < $1.rawValue }
@@ -170,7 +190,7 @@ actor DictionaryRepository {
         WHERE e.lang IN (\(placeholders))
           AND length(e.search_key) BETWEEN ? AND ?
         ORDER BY e.frequency DESC
-        LIMIT 400
+        LIMIT 1500
         """
 
         var bindings: [SQLiteValue] = [.text(mode.partner.rawValue)]
@@ -366,9 +386,15 @@ actor DictionaryRepository {
     }
 
     /// Returns frequency-ordered Tajik candidates (plus optional cloze example) for the word-teaching game.
-    func learningCandidates(topic: String? = nil, mode: DictionaryMode, limit: Int = 500) throws -> [WordCardCandidate] {
+    func learningCandidates(
+        topic: String? = nil,
+        mode: DictionaryMode,
+        maxFrequency: Int = 100,
+        limit: Int = 450
+    ) throws -> [WordCardCandidate] {
         let partnerCol = mode.partner == .russian ? "ex.ru" : "ex.en"
         let topicClause = topic == nil ? "" : "AND e.topic = ?"
+        let freqClause = maxFrequency < 100 ? "AND e.frequency <= ?" : ""
         let sql = """
         SELECT e.id, e.lang, e.headword, e.pos, e.frequency, e.topic,
                (SELECT group_concat(h, ', ') FROM (
@@ -379,13 +405,16 @@ actor DictionaryRepository {
                (SELECT ex.tg FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_tg,
                (SELECT \(partnerCol) FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_partner
         FROM entries e
-        WHERE e.lang = 'tg' \(topicClause)
+        WHERE e.lang = 'tg' \(topicClause) \(freqClause)
         ORDER BY e.frequency DESC, e.id ASC
         LIMIT ?
         """
         var bindings: [SQLiteValue] = [.text(mode.partner.rawValue)]
         if let topic {
             bindings.append(.text(topic))
+        }
+        if maxFrequency < 100 {
+            bindings.append(.int64(Int64(maxFrequency)))
         }
         bindings.append(.int64(Int64(limit)))
 
@@ -402,6 +431,67 @@ actor DictionaryRepository {
                 examplePartner: row.stringOrNil(8)
             )
         }
+    }
+
+    func lexiconStats() throws -> LexiconStats {
+        let rows = try db.query(
+            """
+            SELECT COUNT(*),
+                   SUM(CASE WHEN frequency >= 90 THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN frequency BETWEEN 80 AND 89 THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN frequency BETWEEN 70 AND 79 THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN frequency < 70 THEN 1 ELSE 0 END)
+            FROM entries
+            WHERE lang = 'tg'
+            """
+        ) { row in
+            LexiconStats(
+                totalTajik: row.int(0),
+                tier90Count: row.int(1),
+                tier80Count: row.int(2),
+                tier70Count: row.int(3),
+                tierOtherCount: row.int(4)
+            )
+        }
+        return rows.first ?? .fallback
+    }
+
+    /// Samples stratified Tajik entries across all 4 frequency tiers for the quick level placement test.
+    func placementPool(mode: DictionaryMode) throws -> [WordCardCandidate] {
+        let ranges: [(Int, Int)] = [(90, 100), (80, 89), (70, 79), (40, 69)]
+        var combined: [WordCardCandidate] = []
+        for (lo, hi) in ranges {
+            let sql = """
+            SELECT e.id, e.lang, e.headword, e.pos, e.frequency, e.topic,
+                   (SELECT group_concat(h, ', ') FROM (
+                        SELECT t2.headword AS h
+                        FROM translations t JOIN entries t2 ON t2.id = t.to_id
+                        WHERE t.from_id = e.id AND t2.lang = ?
+                        ORDER BY t.position LIMIT 2)) AS preview
+            FROM entries e
+            WHERE e.lang = 'tg' AND e.frequency BETWEEN ? AND ?
+            ORDER BY RANDOM()
+            LIMIT 25
+            """
+            let rows = try db.query(
+                sql,
+                bindings: [.text(mode.partner.rawValue), .int64(Int64(lo)), .int64(Int64(hi))]
+            ) { row in
+                WordCardCandidate(
+                    entryId: row.int64(0),
+                    language: Language(rawValue: row.string(1)) ?? .tajik,
+                    headword: row.string(2),
+                    preview: row.stringOrNil(6) ?? "",
+                    pos: row.stringOrNil(3).flatMap(PartOfSpeech.init(rawValue:)),
+                    frequency: row.int(4),
+                    topic: row.stringOrNil(5),
+                    exampleTg: nil,
+                    examplePartner: nil
+                )
+            }
+            combined.append(contentsOf: rows)
+        }
+        return combined
     }
 
     /// Fetches candidates for specific entry IDs (e.g. Favorites deck) in partner mode.

@@ -7,6 +7,114 @@ enum ChallengeKind: String, Sendable, Hashable {
     case typing
 }
 
+/// CEFR-aligned Tajik vocabulary proficiency tiers.
+enum CefrLevel: String, CaseIterable, Comparable, Sendable {
+    case a0 = "A0"
+    case a1 = "A1"
+    case a2 = "A2"
+    case b1 = "B1"
+    case b2 = "B2"
+
+    var rank: Int {
+        switch self {
+        case .a0: return 0
+        case .a1: return 1
+        case .a2: return 2
+        case .b1: return 3
+        case .b2: return 4
+        }
+    }
+
+    static func < (lhs: CefrLevel, rhs: CefrLevel) -> Bool {
+        lhs.rank < rhs.rank
+    }
+
+    var title: String {
+        switch self {
+        case .a0: return String(localized: "Starter")
+        case .a1: return String(localized: "Elementary")
+        case .a2: return String(localized: "Pre-Intermediate")
+        case .b1: return String(localized: "Intermediate")
+        case .b2: return String(localized: "Upper-Intermediate")
+        }
+    }
+
+    /// Frequency ceiling in `dictionary.sqlite` (`40..100`) where new Smart Mix words start.
+    var recommendedCeilingFrequency: Int {
+        switch self {
+        case .a0: return 100
+        case .a1: return 90
+        case .a2: return 82
+        case .b1: return 72
+        case .b2: return 62
+        }
+    }
+
+    var baselineKnownWords: Int {
+        switch self {
+        case .a0: return 0
+        case .a1: return 150
+        case .a2: return 500
+        case .b1: return 1500
+        case .b2: return 3200
+        }
+    }
+}
+
+struct LexiconStats: Sendable {
+    let totalTajik: Int
+    let tier90Count: Int
+    let tier80Count: Int
+    let tier70Count: Int
+    let tierOtherCount: Int
+
+    static let fallback = LexiconStats(
+        totalTajik: 16_358,
+        tier90Count: 290,
+        tier80Count: 1_474,
+        tier70Count: 4_536,
+        tierOtherCount: 10_058
+    )
+}
+
+struct FrequencyTierProgress: Identifiable, Sendable {
+    let id: String
+    let label: String
+    let knownCount: Int
+    let totalCount: Int
+}
+
+struct DailyActivityPoint: Identifiable, Sendable {
+    var id: String { dateKey }
+    let dateKey: String
+    let shortLabel: String
+    let wordsReviewed: Int
+    let studySeconds: Int
+    let metGoal: Bool
+}
+
+struct PlacementQuestion: Identifiable, Hashable, Sendable {
+    var id: Int64 { candidate.entryId }
+    let candidate: WordCardCandidate
+    let tier: Int // 1..4
+    let choices: [String] // partner-language translations
+}
+
+struct PlacementAnswer: Sendable {
+    let question: PlacementQuestion
+    let isCorrect: Bool
+}
+
+struct PlacementResult: Sendable {
+    let cefrLevel: CefrLevel
+    let correctCount: Int
+    let totalCount: Int
+    let estimatedKnownWords: Int
+    let textRecognitionPercent: Double
+    let knownEntryIds: [Int64]
+    let focusEntryIds: [Int64]
+}
+
 /// Candidate Tajik vocabulary item drawn from the bundled dictionary for a learning round.
 struct WordCardCandidate: Identifiable, Hashable, Sendable {
     var id: Int64 { entryId }
@@ -59,6 +167,8 @@ struct DailyStudySnapshot: Hashable, Sendable {
     var wordsLearned: Int
     var xpEarned: Int
     var roundsCompleted: Int
+    var studySeconds: Int = 0
+    var correctReviews: Int = 0
 }
 
 struct GameRoundItem: Identifiable, Hashable, Sendable {
@@ -96,6 +206,10 @@ struct GamificationSummary: Sendable {
     let xpForNextLevel: Int
     let currentStreakDays: Int
     let longestStreakDays: Int
+    let activeDaysCount: Int
+    let totalStudySeconds: Int
+    let totalReviews: Int
+    let overallAccuracyPercent: Int
     let todayReviewed: Int
     let todayLearned: Int
     let dailyGoal: Int
@@ -103,10 +217,16 @@ struct GamificationSummary: Sendable {
     let learningCount: Int
     let masteredCount: Int
     let dueNowCount: Int
+    let estimatedKnownWords: Int
+    let textRecognitionPercent: Double
+    let cefrLevel: CefrLevel
+    let totalLexiconCount: Int
+    let tierBreakdown: [FrequencyTierProgress]
+    let recent7Days: [DailyActivityPoint]
     let badges: [AchievementBadge]
 }
 
-/// Lingvist-inspired periodic memory scheduler and active-recall game engine.
+/// Lingvist-inspired periodic memory scheduler, Zipf coverage estimator, and placement engine.
 enum WordGameEngine {
     static let daySeconds: TimeInterval = 86_400
     static let defaultRoundSize = 10
@@ -119,12 +239,20 @@ enum WordGameEngine {
         return pow(0.9, safeElapsed / safeStability)
     }
 
-    /// Selects a balanced batch of overdue periodic reviews + high-frequency new words.
+    /// Zipf-calibrated percentage of everyday Tajik text recognized for `effectiveKnownWords`.
+    static func textRecognitionPercent(effectiveKnownWords: Double) -> Double {
+        guard effectiveKnownWords > 0 else { return 0 }
+        let pct = 98.5 * (1.0 - 1.0 / pow(1.0 + effectiveKnownWords / 140.0, 0.68))
+        return min(99.0, max(0.0, pct))
+    }
+
+    /// Selects a balanced batch of overdue periodic reviews + level-appropriate high-frequency new words.
     static func buildRoundQueue(
         candidates: [WordCardCandidate],
         progressById: [Int64: WordProgressSnapshot],
         now: Date = .now,
-        roundSize: Int = defaultRoundSize
+        roundSize: Int = defaultRoundSize,
+        targetMaxFrequency: Int? = nil
     ) -> [WordCardCandidate] {
         let usable = candidates.filter { !$0.preview.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         guard !usable.isEmpty, roundSize > 0 else { return [] }
@@ -150,20 +278,38 @@ enum WordGameEngine {
         }
         .map(\.0)
 
-        let newOrdered = active.filter { candidate in
+        let unstudied = active.filter { candidate in
             let p = progressById[candidate.entryId]
             return p == nil || p?.lastReviewedAt == nil
         }
-        .sorted { lhs, rhs in
-            if lhs.frequency != rhs.frequency { return lhs.frequency > rhs.frequency }
-            return lhs.entryId < rhs.entryId
+
+        // Prioritize words starting right at the user's placement ceiling (if any), then fall back.
+        let frontierOrdered: [WordCardCandidate]
+        if let ceiling = targetMaxFrequency, ceiling < 100 {
+            let atOrBelow = unstudied
+                .filter { $0.frequency <= ceiling }
+                .sorted { lhs, rhs in
+                    if lhs.frequency != rhs.frequency { return lhs.frequency > rhs.frequency }
+                    return lhs.entryId < rhs.entryId
+                }
+            let above = unstudied
+                .filter { $0.frequency > ceiling }
+                .sorted { lhs, rhs in
+                    if lhs.frequency != rhs.frequency { return lhs.frequency > rhs.frequency }
+                    return lhs.entryId < rhs.entryId
+                }
+            frontierOrdered = atOrBelow + above
+        } else {
+            frontierOrdered = unstudied.sorted { lhs, rhs in
+                if lhs.frequency != rhs.frequency { return lhs.frequency > rhs.frequency }
+                return lhs.entryId < rhs.entryId
+            }
         }
 
         var picked: [WordCardCandidate] = []
         var pickedIds = Set<Int64>()
 
         if dueSorted.count >= backlogThreshold {
-            // Backlog protection: reinforce fading words before adding new ones.
             for item in dueSorted.prefix(roundSize) {
                 picked.append(item)
                 pickedIds.insert(item.entryId)
@@ -175,7 +321,7 @@ enum WordGameEngine {
         if dueSorted.isEmpty {
             newQuota = min(roundSize, 8)
         } else {
-            newQuota = min(newOrdered.count, min(3, max(1, roundSize / 3)))
+            newQuota = min(frontierOrdered.count, min(3, max(1, roundSize / 3)))
         }
 
         let dueTarget = max(0, roundSize - newQuota)
@@ -184,18 +330,16 @@ enum WordGameEngine {
             pickedIds.insert(item.entryId)
         }
 
-        for item in newOrdered where picked.count < roundSize && !pickedIds.contains(item.entryId) {
+        for item in frontierOrdered where picked.count < roundSize && !pickedIds.contains(item.entryId) {
             picked.append(item)
             pickedIds.insert(item.entryId)
         }
 
-        // Top up with remaining due items if fewer new words were available.
         for item in dueSorted where picked.count < roundSize && !pickedIds.contains(item.entryId) {
             picked.append(item)
             pickedIds.insert(item.entryId)
         }
 
-        // If user has seen everything and nothing is due yet, practice lowest-stability words.
         if picked.isEmpty {
             let fallback = active.sorted { lhs, rhs in
                 let sl = progressById[lhs.entryId]?.stabilityDays ?? 0
@@ -257,7 +401,6 @@ enum WordGameEngine {
         var seenNormalized = Set<String>([card.headword.lowercased()])
         var distractors: [String] = []
 
-        // Prefer distractors with the same part of speech and similar frequency.
         let samePos = pool
             .filter { $0.entryId != card.entryId && $0.pos == card.pos }
             .sorted { abs($0.frequency - card.frequency) < abs($1.frequency - card.frequency) }
@@ -390,6 +533,85 @@ enum WordGameEngine {
         min(3, max(0, remainingCount))
     }
 
+    // MARK: - Placement Level Test
+
+    static func buildPlacementQuestions(pool: [WordCardCandidate]) -> [PlacementQuestion] {
+        let usable = pool.filter { !$0.preview.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        let tiers: [(Int, ClosedRange<Int>)] = [
+            (1, 90...100),
+            (2, 80...89),
+            (3, 70...79),
+            (4, 40...69),
+        ]
+
+        var allPreviews = usable.map(\.preview)
+        allPreviews.shuffle()
+
+        var questions: [PlacementQuestion] = []
+        var usedIds = Set<Int64>()
+
+        for (tier, range) in tiers {
+            let tierWords = usable
+                .filter { range.contains($0.frequency) && !usedIds.contains($0.entryId) }
+                .shuffled()
+            for candidate in tierWords.prefix(3) {
+                usedIds.insert(candidate.entryId)
+                var seenMeaning = Set<String>([candidate.preview.lowercased()])
+                var distractors: [String] = []
+                for other in usable.shuffled() where other.entryId != candidate.entryId {
+                    let key = other.preview.lowercased()
+                    if seenMeaning.insert(key).inserted {
+                        distractors.append(other.preview)
+                        if distractors.count == 3 { break }
+                    }
+                }
+                let choices = ([candidate.preview] + distractors).shuffled()
+                questions.append(PlacementQuestion(candidate: candidate, tier: tier, choices: choices))
+            }
+        }
+        return questions
+    }
+
+    static func evaluatePlacement(answers: [PlacementAnswer]) -> PlacementResult {
+        func passedTier(_ tier: Int) -> Bool {
+            let group = answers.filter { $0.question.tier == tier }
+            guard !group.isEmpty else { return false }
+            let right = group.filter(\.isCorrect).count
+            return right >= max(2, (group.count + 1) / 2)
+        }
+
+        let level: CefrLevel
+        if passedTier(1) && passedTier(2) && passedTier(3) && passedTier(4) {
+            level = .b2
+        } else if passedTier(1) && passedTier(2) && passedTier(3) {
+            level = .b1
+        } else if passedTier(1) && passedTier(2) {
+            level = .a2
+        } else if passedTier(1) {
+            level = .a1
+        } else {
+            level = .a0
+        }
+
+        let correctCount = answers.filter(\.isCorrect).count
+        let knownIds = answers.filter(\.isCorrect).map(\.question.candidate.entryId)
+        let focusIds = answers.filter { !$0.isCorrect }.map(\.question.candidate.entryId)
+        let estimatedWords = level.baselineKnownWords + knownIds.count
+        let coverage = textRecognitionPercent(effectiveKnownWords: Double(estimatedWords))
+
+        return PlacementResult(
+            cefrLevel: level,
+            correctCount: correctCount,
+            totalCount: answers.count,
+            estimatedKnownWords: estimatedWords,
+            textRecognitionPercent: coverage,
+            knownEntryIds: knownIds,
+            focusEntryIds: focusIds
+        )
+    }
+
+    // MARK: - Summary & Formatting
+
     static func dateKey(for date: Date = .now, calendar: Calendar = .current) -> String {
         let comps = calendar.dateComponents([.year, .month, .day], from: date)
         let y = comps.year ?? 2026
@@ -398,10 +620,26 @@ enum WordGameEngine {
         return String(format: "%04d-%02d-%02d", y, m, d)
     }
 
+    static func formatStudyDuration(seconds: Int) -> String {
+        if seconds < 60 {
+            return "\(max(0, seconds))s"
+        }
+        let minutes = seconds / 60
+        if minutes < 60 {
+            return "\(minutes)m"
+        }
+        let hours = minutes / 60
+        let remMin = minutes % 60
+        return remMin > 0 ? "\(hours)h \(remMin)m" : "\(hours)h"
+    }
+
     static func computeSummary(
         progress: [WordProgressSnapshot],
         logs: [DailyStudySnapshot],
         dailyGoal: Int,
+        lexiconStats: LexiconStats = .fallback,
+        placementLevel: CefrLevel? = nil,
+        placementBaselineWords: Int = 0,
         now: Date = .now,
         calendar: Calendar = .current
     ) -> GamificationSummary {
@@ -459,6 +697,10 @@ enum WordGameEngine {
         let todayLog = logs.first { $0.dateKey == todayKey }
         let todayReviewed = todayLog?.wordsReviewed ?? 0
         let todayLearned = todayLog?.wordsLearned ?? 0
+        let totalStudySeconds = logs.reduce(0) { $0 + $1.studySeconds }
+        let totalReviews = logs.reduce(0) { $0 + $1.wordsReviewed }
+        let totalCorrect = logs.reduce(0) { $0 + $1.correctReviews }
+        let accuracyPct = totalReviews > 0 ? Int((Double(totalCorrect) / Double(totalReviews) * 100.0).rounded()) : 100
 
         let encountered = progress.filter { $0.lastReviewedAt != nil || $0.isKnownSkipped }.count
         let mastered = progress.filter { $0.masteryStage >= 4 || $0.isKnownSkipped }.count
@@ -466,7 +708,65 @@ enum WordGameEngine {
         let dueNow = progress.filter {
             !$0.isKnownSkipped && $0.lastReviewedAt != nil && $0.nextReviewAt <= now
         }.count
-        let totalReviews = logs.reduce(0) { $0 + $1.wordsReviewed }
+
+        // Weighted vocabulary size & Zipf text coverage percentage
+        let weightedActiveKnown = progress.reduce(0.0) { partial, p in
+            if p.isKnownSkipped || p.masteryStage >= 4 { return partial + 1.0 }
+            if p.masteryStage >= 2 { return partial + 0.75 }
+            if p.masteryStage == 1 { return partial + 0.45 }
+            if p.lastReviewedAt != nil { return partial + 0.2 }
+            return partial
+        }
+        let effectiveKnown = Double(placementBaselineWords) + weightedActiveKnown
+        let estimatedKnownWords = Int(effectiveKnown.rounded())
+        let coveragePct = textRecognitionPercent(effectiveKnownWords: effectiveKnown)
+
+        // CEFR level combines placement test result & earned mastery
+        let vocabCefr: CefrLevel
+        switch estimatedKnownWords {
+        case 3000...: vocabCefr = .b2
+        case 1400...: vocabCefr = .b1
+        case 450...: vocabCefr = .a2
+        case 120...: vocabCefr = .a1
+        default: vocabCefr = .a0
+        }
+        let cefrLevel = max(placementLevel ?? .a0, vocabCefr)
+
+        // Distribute estimated/active known counts cleanly across frequency tiers
+        var remainingCredit = estimatedKnownWords
+        let t90Known = min(lexiconStats.tier90Count, remainingCredit)
+        remainingCredit = max(0, remainingCredit - t90Known)
+        let t80Known = min(lexiconStats.tier80Count, remainingCredit)
+        remainingCredit = max(0, remainingCredit - t80Known)
+        let t70Known = min(lexiconStats.tier70Count, remainingCredit)
+        remainingCredit = max(0, remainingCredit - t70Known)
+        let tOtherKnown = min(lexiconStats.tierOtherCount, remainingCredit)
+
+        let tiers = [
+            FrequencyTierProgress(id: "t90", label: String(localized: "Core Survival (90–100)"), knownCount: t90Known, totalCount: lexiconStats.tier90Count),
+            FrequencyTierProgress(id: "t80", label: String(localized: "Everyday (80–89)"), knownCount: t80Known, totalCount: lexiconStats.tier80Count),
+            FrequencyTierProgress(id: "t70", label: String(localized: "Conversational (70–79)"), knownCount: t70Known, totalCount: lexiconStats.tier70Count),
+            FrequencyTierProgress(id: "t40", label: String(localized: "Advanced (40–69)"), knownCount: tOtherKnown, totalCount: lexiconStats.tierOtherCount),
+        ]
+
+        // Last 7 days activity chart
+        let logByKey = Dictionary(uniqueKeysWithValues: logs.map { ($0.dateKey, $0) })
+        let dayFormatter = DateFormatter()
+        dayFormatter.calendar = calendar
+        dayFormatter.dateFormat = "E"
+        let recent7: [DailyActivityPoint] = (0..<7).reversed().compactMap { offset in
+            guard let day = calendar.date(byAdding: .day, value: -offset, to: now) else { return nil }
+            let key = dateKey(for: day, calendar: calendar)
+            let log = logByKey[key]
+            let reviewed = log?.wordsReviewed ?? 0
+            return DailyActivityPoint(
+                dateKey: key,
+                shortLabel: String(dayFormatter.string(from: day).prefix(2)),
+                wordsReviewed: reviewed,
+                studySeconds: log?.studySeconds ?? 0,
+                metGoal: reviewed >= max(1, dailyGoal)
+            )
+        }
 
         let badges = [
             AchievementBadge(
@@ -521,6 +821,10 @@ enum WordGameEngine {
             xpForNextLevel: levelStep,
             currentStreakDays: currentStreak,
             longestStreakDays: longestStreak,
+            activeDaysCount: activeDays.count,
+            totalStudySeconds: totalStudySeconds,
+            totalReviews: totalReviews,
+            overallAccuracyPercent: accuracyPct,
             todayReviewed: todayReviewed,
             todayLearned: todayLearned,
             dailyGoal: max(1, dailyGoal),
@@ -528,6 +832,12 @@ enum WordGameEngine {
             learningCount: learning,
             masteredCount: mastered,
             dueNowCount: dueNow,
+            estimatedKnownWords: estimatedKnownWords,
+            textRecognitionPercent: coveragePct,
+            cefrLevel: cefrLevel,
+            totalLexiconCount: lexiconStats.totalTajik,
+            tierBreakdown: tiers,
+            recent7Days: recent7,
             badges: badges
         )
     }

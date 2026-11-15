@@ -150,6 +150,66 @@
         "ru" : { "stringUnit" : { "state" : "translated", "value" : "Сыграть ещё раунд" } },
         "tg" : { "stringUnit" : { "state" : "translated", "value" : "Боз як давр бозӣ кардан" } }
       }
+    },
+    "Everyday Tajik recognized" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Понимание таджикского текста" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Фаҳмиши матни тоҷикӣ" } }
+      }
+    },
+    "Level Test" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Тест уровня" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Санҷиши сатҳ" } }
+      }
+    },
+    "Check Your Level (1-min Test)" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Определить уровень (1 мин)" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Санҷиши сатҳи дониш (1 дақ.)" } }
+      }
+    },
+    "Retake Level Placement Test" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Пересдать тест уровня" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Аз нав супоридани санҷиш" } }
+      }
+    },
+    "Study Analytics" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Статистика обучения" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Омори омӯзиш" } }
+      }
+    },
+    "Words known" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Знакомых слов" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Калимаҳои ошно" } }
+      }
+    },
+    "Time studied" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Время занятий" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Вақти омӯзиш" } }
+      }
+    },
+    "Active days" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Активных дней" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Рӯзҳои фаъол" } }
+      }
+    },
+    "Last 7 days" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Последние 7 дней" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "7 рӯзи охир" } }
+      }
+    },
+    "Start Learning at My Level" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Учить слова моего уровня" } },
+        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Оғози омӯзиш аз сатҳи ман" } }
+      }
     }
   },
   "version" : "1.0"
