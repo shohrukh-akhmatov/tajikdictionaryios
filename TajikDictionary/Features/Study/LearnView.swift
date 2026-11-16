@@ -15,6 +15,12 @@ struct LearnView: View {
     @State private var activeGameSource: GameDeckSource?
     @State private var showPlacementTest = false
 
+    private var weakWordsCount: Int {
+        progress.filter {
+            !$0.isKnownSkipped && ($0.lapses > 0 || ($0.lastReviewedAt != nil && $0.masteryStage <= 1) || $0.stabilityDays < 2.0)
+        }.count
+    }
+
     private var summary: GamificationSummary {
         WordGameEngine.computeSummary(
             progress: progress.map(\.snapshot),
@@ -65,6 +71,12 @@ struct LearnView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 deckChip(title: String(localized: "Smart Mix"), source: .smartMix)
+                                if summary.dueNowCount > 0 {
+                                    deckChip(title: "\(String(localized: "Due Reviews")) (\(summary.dueNowCount))", source: .dueReviews)
+                                }
+                                if weakWordsCount > 0 {
+                                    deckChip(title: "\(String(localized: "Weak Words")) (\(weakWordsCount))", source: .weakWords)
+                                }
                                 if !favorites.isEmpty {
                                     deckChip(title: String(localized: "Saved"), source: .saved)
                                 }
@@ -151,6 +163,15 @@ struct LearnView: View {
                             )
                         }
                     }
+
+                    NavigationLink {
+                        VocabularyListView()
+                    } label: {
+                        LabeledContent(
+                            String(localized: "My Vocabulary"),
+                            value: "\(progress.count)"
+                        )
+                    }
                 }
 
                 Section(String(localized: "Achievements")) {
@@ -194,6 +215,9 @@ struct LearnView: View {
             }
             .fullScreenCover(isPresented: $showPlacementTest) {
                 PlacementTestView()
+            }
+            .navigationDestination(for: Int64.self) { entryId in
+                EntryDetailView(entryId: entryId)
             }
         }
     }
@@ -408,6 +432,8 @@ extension GameDeckSource: Identifiable {
     var id: String {
         switch self {
         case .smartMix: return "smart_mix"
+        case .dueReviews: return "due_reviews"
+        case .weakWords: return "weak_words"
         case .saved: return "saved"
         case .topic(let t): return "topic_\(t)"
         }

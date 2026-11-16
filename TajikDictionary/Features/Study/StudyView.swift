@@ -18,6 +18,7 @@ struct StudyView: View {
 
     @Query(sort: \FavoriteItem.addedAt, order: .reverse) private var favorites: [FavoriteItem]
     @Query private var progress: [FlashcardProgress]
+    @Query private var dailyLogs: [DailyStudyLog]
 
     @State private var selectedTopic: String?
     @State private var topics: [TopicCount] = []
@@ -25,6 +26,7 @@ struct StudyView: View {
     @State private var currentIndex = 0
     @State private var flipped = false
     @State private var reviewedCount = 0
+    @State private var cardPresentedAt: Date = .now
 
     init(initialTopic: String? = nil) {
         self.initialTopic = initialTopic
@@ -181,20 +183,36 @@ struct StudyView: View {
         currentIndex = 0
         flipped = false
         reviewedCount = 0
+        cardPresentedAt = .now
     }
 
     private func grade(_ card: StudyCard, _ rating: ReviewRating) {
+        let now = Date.now
+        let responseMs = Int64(max(0, now.timeIntervalSince(cardPresentedAt) * 1000))
         let existing = progress.first { $0.entryId == card.entryId }
         let currentState = existing.map {
             FlashcardState(repetitions: $0.repetitions, intervalDays: $0.intervalDays, easeFactor: $0.easeFactor)
         } ?? FlashcardState()
-        let (nextState, due) = FlashcardScheduler.next(current: currentState, rating: rating)
+        let (nextState, due) = FlashcardScheduler.next(current: currentState, rating: rating, now: now)
+        let eval = WordGameEngine.evaluateClassicFlashcard(
+            existing: existing?.snapshot,
+            entryId: card.entryId,
+            rating: rating,
+            intervalDays: nextState.intervalDays,
+            nextDue: due,
+            now: now
+        )
 
         if let existing {
             existing.repetitions = nextState.repetitions
             existing.intervalDays = nextState.intervalDays
             existing.easeFactor = nextState.easeFactor
             existing.nextReviewAt = due
+            existing.masteryStage = eval.updated.masteryStage
+            existing.stabilityDays = eval.updated.stabilityDays
+            existing.lapses = eval.updated.lapses
+            existing.lastReviewedAt = eval.updated.lastReviewedAt
+            existing.isKnownSkipped = false
             existing.preview = card.preview
         } else {
             modelContext.insert(FlashcardProgress(
@@ -205,12 +223,39 @@ struct StudyView: View {
                 repetitions: nextState.repetitions,
                 intervalDays: nextState.intervalDays,
                 easeFactor: nextState.easeFactor,
-                nextReviewAt: due
+                nextReviewAt: due,
+                masteryStage: eval.updated.masteryStage,
+                stabilityDays: eval.updated.stabilityDays,
+                lapses: eval.updated.lapses,
+                lastReviewedAt: eval.updated.lastReviewedAt,
+                isKnownSkipped: false
             ))
         }
+
+        let key = WordGameEngine.dateKey(for: now)
+        let activeSecs = Int(min(60, max(1, (responseMs + 500) / 1000)))
+        if let today = dailyLogs.first(where: { $0.dateKey == key }) {
+            today.wordsReviewed += 1
+            if eval.newlyLearned { today.wordsLearned += 1 }
+            today.xpEarned += eval.xpAwarded
+            today.studySeconds += activeSecs
+            if eval.isCorrect { today.correctReviews += 1 }
+        } else {
+            modelContext.insert(DailyStudyLog(
+                dateKey: key,
+                wordsReviewed: 1,
+                wordsLearned: eval.newlyLearned ? 1 : 0,
+                xpEarned: eval.xpAwarded,
+                roundsCompleted: 0,
+                studySeconds: activeSecs,
+                correctReviews: eval.isCorrect ? 1 : 0
+            ))
+        }
+        try? modelContext.save()
 
         reviewedCount += 1
         currentIndex += 1
         flipped = false
+        cardPresentedAt = .now
     }
 }

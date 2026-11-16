@@ -1,216 +1,1762 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "Dictionary" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Словарь" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Луғат" } }
+  "sourceLanguage": "en",
+  "strings": {
+    "Dictionary": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Словарь"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Луғат"
+          }
+        }
       }
     },
-    "Learn" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Учить" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Омӯзиш" } }
+    "Learn": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Учить"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Омӯзиш"
+          }
+        }
       }
     },
-    "Saved" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Избранное" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Захирашуда" } }
+    "Saved": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Избранное"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Захирашуда"
+          }
+        }
       }
     },
-    "History" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "История" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Таърих" } }
+    "History": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "История"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Таърих"
+          }
+        }
       }
     },
-    "Settings" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Настройки" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Танзимот" } }
+    "Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Танзимот"
+          }
+        }
       }
     },
-    "Search Tajik or Russian…" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Поиск на таджикском или русском…" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Ҷустуҷӯ ба тоҷикӣ ё русӣ…" } }
+    "Search Tajik or Russian…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск на таджикском или русском…"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҷустуҷӯ ба тоҷикӣ ё русӣ…"
+          }
+        }
       }
     },
-    "Search Tajik or English…" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Поиск на таджикском или английском…" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Ҷустуҷӯ ба тоҷикӣ ё англисӣ…" } }
+    "Search Tajik or English…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск на таджикском или английском…"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҷустуҷӯ ба тоҷикӣ ё англисӣ…"
+          }
+        }
       }
     },
-    "Word of the day" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Слово дня" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Калимаи рӯз" } }
+    "Word of the day": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Слово дня"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаи рӯз"
+          }
+        }
       }
     },
-    "Recent searches" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Недавние" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Ҷустуҷӯҳои охир" } }
+    "Recent searches": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Недавние"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҷустуҷӯҳои охир"
+          }
+        }
       }
     },
-    "Clear" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Очистить" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Пок кардан" } }
+    "Clear": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистить"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пок кардан"
+          }
+        }
       }
     },
-    "Practice" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Тренировка" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Машқ" } }
+    "Practice": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тренировка"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Машқ"
+          }
+        }
       }
     },
-    "Smart Mix" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Умный микс" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Омехтаи ҳушманд" } }
+    "Smart Mix": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Умный микс"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Омехтаи ҳушманд"
+          }
+        }
       }
     },
-    "Word Trainer" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Тренажёр слов" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Бозии калимаомӯзӣ" } }
+    "Word Trainer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тренажёр слов"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бозии калимаомӯзӣ"
+          }
+        }
       }
     },
-    "Start 10-Word Round" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Начать раунд (10 слов)" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Оғози даври 10-калимагӣ" } }
+    "Start 10-Word Round": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Начать раунд (10 слов)"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оғози даври 10-калимагӣ"
+          }
+        }
       }
     },
-    "Classic Flip Flashcards" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Классические карточки" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Кортҳои оддӣ" } }
+    "Classic Flip Flashcards": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Классические карточки"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Кортҳои оддӣ"
+          }
+        }
       }
     },
-    "Vocabulary Progress" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Прогресс словаря" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Пешрафти луғат" } }
+    "Vocabulary Progress": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прогресс словаря"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пешрафти луғат"
+          }
+        }
       }
     },
-    "Achievements" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Достижения" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Дастовардҳо" } }
+    "Achievements": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Достижения"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дастовардҳо"
+          }
+        }
       }
     },
-    "Daily word goal" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Дневная цель" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Ҳадафи рӯзона" } }
+    "Daily word goal": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дневная цель"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҳадафи рӯзона"
+          }
+        }
       }
     },
-    "Today's goal" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Цель на сегодня" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Ҳадафи имрӯз" } }
+    "Today's goal": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цель на сегодня"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҳадафи имрӯз"
+          }
+        }
       }
     },
-    "day streak" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "дн. подряд" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "рӯз пайдарпай" } }
+    "day streak": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "дн. подряд"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "рӯз пайдарпай"
+          }
+        }
       }
     },
-    "I don't know" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Не знаю" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Намедонам" } }
+    "I don't know": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не знаю"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Намедонам"
+          }
+        }
       }
     },
-    "Already know" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Уже знаю" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Аллакай медонам" } }
+    "Already know": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Уже знаю"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Аллакай медонам"
+          }
+        }
       }
     },
-    "Got it, practice again" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Понятно, повторить позже" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Фаҳмидам, боз машқ мекунам" } }
+    "Got it, practice again": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Понятно, повторить позже"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фаҳмидам, боз машқ мекунам"
+          }
+        }
       }
     },
-    "Round complete!" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Раунд завершён!" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Давр анҷом ёфт!" } }
+    "Round complete!": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Раунд завершён!"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Давр анҷом ёфт!"
+          }
+        }
       }
     },
-    "Play Another Round" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Сыграть ещё раунд" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Боз як давр бозӣ кардан" } }
+    "Play Another Round": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сыграть ещё раунд"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Боз як давр бозӣ кардан"
+          }
+        }
       }
     },
-    "Everyday Tajik recognized" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Понимание таджикского текста" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Фаҳмиши матни тоҷикӣ" } }
+    "Everyday Tajik recognized": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Понимание таджикского текста"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фаҳмиши матни тоҷикӣ"
+          }
+        }
       }
     },
-    "Level Test" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Тест уровня" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Санҷиши сатҳ" } }
+    "Level Test": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тест уровня"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Санҷиши сатҳ"
+          }
+        }
       }
     },
-    "Check Your Level (1-min Test)" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Определить уровень (1 мин)" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Санҷиши сатҳи дониш (1 дақ.)" } }
+    "Check Your Level (1-min Test)": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Определить уровень (1 мин)"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Санҷиши сатҳи дониш (1 дақ.)"
+          }
+        }
       }
     },
-    "Retake Level Placement Test" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Пересдать тест уровня" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Аз нав супоридани санҷиш" } }
+    "Retake Level Placement Test": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пересдать тест уровня"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Аз нав супоридани санҷиш"
+          }
+        }
       }
     },
-    "Study Analytics" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Статистика обучения" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Омори омӯзиш" } }
+    "Study Analytics": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Статистика обучения"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Омори омӯзиш"
+          }
+        }
       }
     },
-    "Words known" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Знакомых слов" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Калимаҳои ошно" } }
+    "Words known": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Знакомых слов"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаҳои ошно"
+          }
+        }
       }
     },
-    "Time studied" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Время занятий" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Вақти омӯзиш" } }
+    "Time studied": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Время занятий"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вақти омӯзиш"
+          }
+        }
       }
     },
-    "Active days" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Активных дней" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Рӯзҳои фаъол" } }
+    "Active days": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Активных дней"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рӯзҳои фаъол"
+          }
+        }
       }
     },
-    "Last 7 days" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Последние 7 дней" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "7 рӯзи охир" } }
+    "Last 7 days": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Последние 7 дней"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 рӯзи охир"
+          }
+        }
       }
     },
-    "Start Learning at My Level" : {
-      "localizations" : {
-        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Учить слова моего уровня" } },
-        "tg" : { "stringUnit" : { "state" : "translated", "value" : "Оғози омӯзиш аз сатҳи ман" } }
+    "Start Learning at My Level": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Учить слова моего уровня"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оғози омӯзиш аз сатҳи ман"
+          }
+        }
+      }
+    },
+    "Due Reviews": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Due Reviews"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повторение"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Такрори вожаҳо"
+          }
+        }
+      }
+    },
+    "Weak Words": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weak Words"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сложные слова"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаҳои душвор"
+          }
+        }
+      }
+    },
+    "My Vocabulary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Vocabulary"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мой словарь слов"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Луғати омӯхтаам"
+          }
+        }
+      }
+    },
+    "All": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Все"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҳама"
+          }
+        }
+      }
+    },
+    "Due": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Due"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пора"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Навбатӣ"
+          }
+        }
+      }
+    },
+    "Weak": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weak"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сложные"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Душвор"
+          }
+        }
+      }
+    },
+    "Learning": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learning"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изучаю"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дар омӯзиш"
+          }
+        }
+      }
+    },
+    "Mastered": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mastered"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выучено"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Азхудкунӣ"
+          }
+        }
+      }
+    },
+    "Stage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stage"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Этап"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Марҳила"
+          }
+        }
+      }
+    },
+    "Known": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Known"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Знаю"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Маълум"
+          }
+        }
+      }
+    },
+    "Due now": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Due now"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пора повторить"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вақти такрор"
+          }
+        }
+      }
+    },
+    "Filter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фильтр"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Филтр"
+          }
+        }
+      }
+    },
+    "Filter vocabulary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter vocabulary"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск по словам"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҷустуҷӯи калимаҳо"
+          }
+        }
+      }
+    },
+    "No words match": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No words match"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет подходящих слов"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимае ёфт нашуд"
+          }
+        }
+      }
+    },
+    "Words you study in Word Trainer or Flashcards appear here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Words you study in Word Trainer or Flashcards appear here."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изучаемые в тренажёре и карточках слова появятся здесь."
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаҳое, ки дар машқ ва кортҳо меомӯзед, дар ин ҷо пайдо мешаванд."
+          }
+        }
+      }
+    },
+    "Drill Weak": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drill Weak"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повторить сложные"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Машқи калимаҳои душвор"
+          }
+        }
+      }
+    },
+    "Daily goal met": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily goal met"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дневная цель выполнена"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҳадафи рӯзона иҷро шуд"
+          }
+        }
+      }
+    },
+    "Text recognized": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text recognized"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Понимание текста"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Фаҳмиши матн"
+          }
+        }
+      }
+    },
+    "Known words": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Known words"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Известных слов"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаҳои маълум"
+          }
+        }
+      }
+    },
+    "Your Smart Mix will now prioritize vocabulary tailored to your level.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Smart Mix will now prioritize vocabulary tailored to your level."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подборка Smart Mix теперь подбирает слова под ваш уровень."
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Акнун Smart Mix калимаҳоро мувофиқи сатҳи шумо пешниҳод мекунад."
+          }
+        }
+      }
+    },
+    "Retake Test": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retake Test"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пройти заново"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Аз нав санҷидан"
+          }
+        }
+      }
+    },
+    "Choose the matching meaning": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the matching meaning"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите правильный перевод"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тарҷумаи дурустро интихоб кунед"
+          }
+        }
+      }
+    },
+    "Core": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Core"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Базовый"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Асосӣ"
+          }
+        }
+      }
+    },
+    "Everyday": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everyday"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повседневный"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҳаррӯза"
+          }
+        }
+      }
+    },
+    "Intermediate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intermediate"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Средний"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Миёна"
+          }
+        }
+      }
+    },
+    "Advanced": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продвинутый"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пешрафта"
+          }
+        }
+      }
+    },
+    "Starter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starter"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Начальный"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ибтидоӣ"
+          }
+        }
+      }
+    },
+    "Elementary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elementary"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Базовый"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Появӣ"
+          }
+        }
+      }
+    },
+    "Pre-Intermediate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pre-Intermediate"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ниже среднего"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поёнтар аз миёна"
+          }
+        }
+      }
+    },
+    "Upper-Intermediate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upper-Intermediate"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выше среднего"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Болотар аз миёна"
+          }
+        }
+      }
+    },
+    "Core Survival (90–100)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Core Survival (90–100)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Базовая лексика (90–100)"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаҳои асосӣ (90–100)"
+          }
+        }
+      }
+    },
+    "Everyday (80–89)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everyday (80–89)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повседневная (80–89)"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаҳои ҳаррӯза (80–89)"
+          }
+        }
+      }
+    },
+    "Conversational (70–79)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conversational (70–79)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разговорная (70–79)"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Муоширатӣ (70–79)"
+          }
+        }
+      }
+    },
+    "Advanced (40–69)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced (40–69)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продвинутая (40–69)"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пешрафта (40–69)"
+          }
+        }
+      }
+    },
+    "Learning Progress": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learning Progress"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прогресс изучения"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пешрафти омӯзиш"
+          }
+        }
+      }
+    },
+    "Add to Learning Queue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to Learning Queue"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить в изучение"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ба омӯзиш илова кардан"
+          }
+        }
+      }
+    },
+    "Practice in Trainer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practice in Trainer"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повторить в тренажёре"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дар машқ такрор кардан"
+          }
+        }
+      }
+    },
+    "Mark as Known": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark as Known"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отметить как известное"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҳамчун маълум қайд кардан"
+          }
+        }
+      }
+    },
+    "Not studied yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not studied yet"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ещё не изучалось"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҳанӯз омӯхта нашудааст"
+          }
+        }
+      }
+    },
+    "Mastered / Known": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mastered / Known"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выучено / Известно"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Азхудкунӣ / Маълум"
+          }
+        }
+      }
+    },
+    "Export learning & saved words (JSON)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export learning & saved words (JSON)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экспорт прогресса и избранного (JSON)"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Содироти пешрафт ва захираҳо (JSON)"
+          }
+        }
+      }
+    },
+    "Import backup (JSON)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import backup (JSON)"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Импорт резервной копии (JSON)"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Воридоти нусхаи эҳтиётӣ (JSON)"
+          }
+        }
+      }
+    },
+    "Not taken": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not taken"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не пройден"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Гузаронида нашудааст"
+          }
+        }
+      }
+    },
+    "words due for periodic review": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "words due for periodic review"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "слов пора повторить"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "калима барои такрор"
+          }
+        }
+      }
+    },
+    "Frequency-ordered new words + smart reviews": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frequency-ordered new words + smart reviews"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новые слова по частотности + умное повторение"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаҳои нав аз рӯи басомад + такрори ҳушманд"
+          }
+        }
+      }
+    },
+    "Seen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seen"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Видено"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дидашуда"
+          }
+        }
+      }
+    },
+    "reviews": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "reviews"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "повторов"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "такрор"
+          }
+        }
+      }
+    },
+    "Best": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Best"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рекорд"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Беҳтарин"
+          }
+        }
+      }
+    },
+    "Every word in this round was practiced until learned.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every word in this round was practiced until learned."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Каждое слово в раунде отработано до запоминания."
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҳамаи калимаҳои ин давр то омӯхтан машқ карда шуданд."
+          }
+        }
+      }
+    },
+    "Accuracy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accuracy"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Точность"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дақиқӣ"
+          }
+        }
+      }
+    },
+    "Streak": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Streak"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Серия"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пайдарпай"
+          }
+        }
+      }
+    },
+    "Done": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Готово"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тайёр"
+          }
+        }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

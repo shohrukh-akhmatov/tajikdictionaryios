@@ -278,8 +278,15 @@ struct PlacementTestView: View {
                     ))
                 }
             } else {
-                // Queue missed words from the placement test right away for practice
-                if byId[card.entryId] == nil {
+                // Queue missed words from the placement test right away for practice (even on retake)
+                if let existing = byId[card.entryId] {
+                    existing.isKnownSkipped = false
+                    existing.masteryStage = 0
+                    existing.stabilityDays = 0.25
+                    existing.lapses += 1
+                    existing.lastReviewedAt = existing.lastReviewedAt ?? now
+                    existing.nextReviewAt = now
+                } else {
                     modelContext.insert(FlashcardProgress(
                         entryId: card.entryId,
                         lang: card.language.rawValue,
@@ -291,7 +298,7 @@ struct PlacementTestView: View {
                         nextReviewAt: now,
                         masteryStage: 0,
                         stabilityDays: 0.25,
-                        lapses: 0,
+                        lapses: 1,
                         lastReviewedAt: now,
                         isKnownSkipped: false
                     ))

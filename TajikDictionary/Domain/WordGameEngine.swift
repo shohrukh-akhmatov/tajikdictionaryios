@@ -355,6 +355,81 @@ enum WordGameEngine {
         return picked
     }
 
+    /// Selects only overdue periodic reviews (sorted by lowest retrieval probability). Falls back to lowest stability active words.
+    static func buildDueRoundQueue(
+        candidates: [WordCardCandidate],
+        progressById: [Int64: WordProgressSnapshot],
+        now: Date = .now,
+        roundSize: Int = defaultRoundSize
+    ) -> [WordCardCandidate] {
+        let usable = candidates.filter { !$0.preview.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        guard !usable.isEmpty, roundSize > 0 else { return [] }
+
+        let activeStudied = usable.filter { candidate in
+            guard let p = progressById[candidate.entryId] else { return false }
+            return !p.isKnownSkipped && p.lastReviewedAt != nil
+        }
+
+        let dueSorted = activeStudied.compactMap { candidate -> (WordCardCandidate, Double)? in
+            guard let p = progressById[candidate.entryId], p.nextReviewAt <= now else { return nil }
+            let elapsed = now.timeIntervalSince(p.lastReviewedAt ?? now) / daySeconds
+            return (candidate, retrievalProbability(stabilityDays: p.stabilityDays, elapsedDays: elapsed))
+        }
+        .sorted { lhs, rhs in
+            if abs(lhs.1 - rhs.1) > 0.0001 { return lhs.1 < rhs.1 }
+            return lhs.0.frequency > rhs.0.frequency
+        }
+        .map(\.0)
+
+        if dueSorted.count >= roundSize {
+            return Array(dueSorted.prefix(roundSize))
+        }
+
+        var picked = dueSorted
+        var seen = Set(picked.map(\.entryId))
+        let soonest = activeStudied
+            .filter { !seen.contains($0.entryId) }
+            .sorted { lhs, rhs in
+                let dl = progressById[lhs.entryId]?.nextReviewAt ?? .distantFuture
+                let dr = progressById[rhs.entryId]?.nextReviewAt ?? .distantFuture
+                if dl != dr { return dl < dr }
+                return lhs.frequency > rhs.frequency
+            }
+        for item in soonest where picked.count < roundSize {
+            picked.append(item)
+            seen.insert(item.entryId)
+        }
+        return picked
+    }
+
+    /// Selects the user's weakest / most-lapsed words so trouble vocabulary gets focused repetition.
+    static func buildWeakRoundQueue(
+        candidates: [WordCardCandidate],
+        progressById: [Int64: WordProgressSnapshot],
+        roundSize: Int = defaultRoundSize
+    ) -> [WordCardCandidate] {
+        let usable = candidates.filter { !$0.preview.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        guard !usable.isEmpty, roundSize > 0 else { return [] }
+
+        let weakPool = usable.filter { candidate in
+            guard let p = progressById[candidate.entryId], !p.isKnownSkipped else { return false }
+            return p.lapses > 0 || (p.lastReviewedAt != nil && p.masteryStage <= 1) || p.stabilityDays < 2.0
+        }
+        .sorted { lhs, rhs in
+            let pl = progressById[lhs.entryId]
+            let pr = progressById[rhs.entryId]
+            let ll = pl?.lapses ?? 0
+            let lr = pr?.lapses ?? 0
+            if ll != lr { return ll > lr }
+            let sl = pl?.stabilityDays ?? 0
+            let sr = pr?.stabilityDays ?? 0
+            if abs(sl - sr) > 0.01 { return sl < sr }
+            return lhs.frequency > rhs.frequency
+        }
+
+        return Array(weakPool.prefix(roundSize))
+    }
+
     static func challengeKind(for masteryStage: Int, headword: String) -> ChallengeKind {
         let letterCount = headword.trimmingCharacters(in: .whitespacesAndNewlines).count
         switch masteryStage {
@@ -463,10 +538,16 @@ enum WordGameEngine {
               !example.isEmpty else { return nil }
         let target = targetHeadword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !target.isEmpty else { return nil }
-        if let range = example.range(of: target, options: .caseInsensitive) {
-            return example.replacingCharacters(in: range, with: "____")
+        let escaped = NSRegularExpression.escapedPattern(for: target)
+        // Match only at start of a word (never mid-word like "он" inside "китобхона").
+        let pattern = "(?iu)(?<!\\p{L})\(escaped)\\p{L}*"
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        let fullRange = NSRange(example.startIndex..<example.endIndex, in: example)
+        guard let match = regex.firstMatch(in: example, range: fullRange),
+              let swiftRange = Range(match.range, in: example) else {
+            return nil
         }
-        return nil
+        return example.replacingCharacters(in: swiftRange, with: "____")
     }
 
     static func checkTypedAnswer(input: String, target: String) -> AnswerCheckResult {
@@ -528,12 +609,58 @@ enum WordGameEngine {
         return (state, xp, wasUnlearned)
     }
 
+    /// Maps classic flip-flashcard SM-2 ratings onto periodic mastery & daily XP stats.
+    static func evaluateClassicFlashcard(
+        existing: WordProgressSnapshot?,
+        entryId: Int64,
+        rating: ReviewRating,
+        intervalDays: Int,
+        nextDue: Date,
+        now: Date = .now
+    ) -> (updated: WordProgressSnapshot, xpAwarded: Int, newlyLearned: Bool, isCorrect: Bool) {
+        var state = existing ?? WordProgressSnapshot(entryId: entryId)
+        let wasUnlearned = state.lastReviewedAt == nil
+        let isCorrect = rating != .again
+
+        state.repetitions += 1
+        state.lastReviewedAt = now
+        state.nextReviewAt = nextDue
+        state.isKnownSkipped = false
+
+        let xp: Int
+        switch rating {
+        case .again:
+            state.lapses += 1
+            state.masteryStage = max(0, state.masteryStage - 1)
+            state.stabilityDays = max(0.25, min(0.5, Double(max(1, intervalDays)) * 0.5))
+            xp = 0
+        case .good:
+            state.masteryStage = min(4, max(1, state.masteryStage + 1))
+            state.stabilityDays = max(1.0, Double(intervalDays))
+            xp = 8
+        case .easy:
+            state.masteryStage = min(4, state.masteryStage + 1)
+            state.stabilityDays = max(2.0, Double(intervalDays))
+            xp = 12
+        }
+
+        return (state, xp, wasUnlearned, isCorrect)
+    }
+
     /// Re-inserts a missed word a few positions later so the user practices it until learned.
     static func reinsertIndex(remainingCount: Int) -> Int {
         min(3, max(0, remainingCount))
     }
 
     // MARK: - Placement Level Test
+
+    private static func previewGlossTokens(_ preview: String) -> Set<String> {
+        let parts = preview
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .filter { !$0.isEmpty }
+        return Set(parts)
+    }
 
     static func buildPlacementQuestions(pool: [WordCardCandidate]) -> [PlacementQuestion] {
         let usable = pool.filter { !$0.preview.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -544,9 +671,6 @@ enum WordGameEngine {
             (4, 40...69),
         ]
 
-        var allPreviews = usable.map(\.preview)
-        allPreviews.shuffle()
-
         var questions: [PlacementQuestion] = []
         var usedIds = Set<Int64>()
 
@@ -556,10 +680,13 @@ enum WordGameEngine {
                 .shuffled()
             for candidate in tierWords.prefix(3) {
                 usedIds.insert(candidate.entryId)
+                let candidateTokens = previewGlossTokens(candidate.preview)
                 var seenMeaning = Set<String>([candidate.preview.lowercased()])
                 var distractors: [String] = []
                 for other in usable.shuffled() where other.entryId != candidate.entryId {
                     let key = other.preview.lowercased()
+                    let otherTokens = previewGlossTokens(other.preview)
+                    if !candidateTokens.isDisjoint(with: otherTokens) { continue }
                     if seenMeaning.insert(key).inserted {
                         distractors.append(other.preview)
                         if distractors.count == 3 { break }
@@ -577,7 +704,8 @@ enum WordGameEngine {
             let group = answers.filter { $0.question.tier == tier }
             guard !group.isEmpty else { return false }
             let right = group.filter(\.isCorrect).count
-            return right >= max(2, (group.count + 1) / 2)
+            let required = min(group.count, max(2, (group.count + 1) / 2))
+            return right >= required
         }
 
         let level: CefrLevel

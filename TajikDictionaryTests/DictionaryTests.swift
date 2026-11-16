@@ -254,5 +254,55 @@ final class DictionaryTests: XCTestCase {
             targetMaxFrequency: 82
         )
         XCTAssertEqual(queue.map(\.entryId), [12, 13])
+
+        // Whole-word cloze matching must not match short targets inside longer words.
+        XCTAssertNil(WordGameEngine.makeClozeSentence(exampleTg: "Китобхона калон аст.", targetHeadword: "он"))
+        XCTAssertEqual(WordGameEngine.makeClozeSentence(exampleTg: "Он китоб хуб аст.", targetHeadword: "он"), "____ китоб хуб аст.")
+
+        // Due & weak decks filter properly.
+        let now = Date(timeIntervalSince1970: 1_731_000_000)
+        let weakSnapshot = WordProgressSnapshot(
+            entryId: 12,
+            masteryStage: 1,
+            stabilityDays: 0.5,
+            repetitions: 2,
+            lapses: 2,
+            lastReviewedAt: now.addingTimeInterval(-WordGameEngine.daySeconds),
+            nextReviewAt: now.addingTimeInterval(-100),
+            isKnownSkipped: false
+        )
+        let dueOnly = WordGameEngine.buildDueRoundQueue(candidates: [tier1, tier2, tier3, tier4], progressById: [12: weakSnapshot], now: now)
+        XCTAssertEqual(dueOnly.map(\.entryId), [12])
+        let weakOnly = WordGameEngine.buildWeakRoundQueue(candidates: [tier1, tier2, tier3, tier4], progressById: [12: weakSnapshot])
+        XCTAssertEqual(weakOnly.map(\.entryId), [12])
+
+        // Classic flashcard grading advances masteryStage & XP.
+        let classicEval = WordGameEngine.evaluateClassicFlashcard(
+            existing: nil,
+            entryId: 10,
+            rating: .good,
+            intervalDays: 1,
+            nextDue: now.addingTimeInterval(WordGameEngine.daySeconds),
+            now: now
+        )
+        XCTAssertEqual(classicEval.updated.masteryStage, 1)
+        XCTAssertTrue(classicEval.newlyLearned)
+        XCTAssertEqual(classicEval.xpAwarded, 8)
+    }
+
+    func testFullBackupV2RoundTrip() throws {
+        let now = Date(timeIntervalSince1970: 1_731_000_000)
+        let fav = FavoriteItem(entryId: 1, lang: "tg", headword: "китоб", preview: "книга", addedAt: now)
+        let card = FlashcardProgress(entryId: 1, lang: "tg", headword: "китоб", preview: "книга", repetitions: 2, intervalDays: 6, easeFactor: 2.5, nextReviewAt: now, masteryStage: 2, stabilityDays: 6.0, lapses: 0, lastReviewedAt: now, isKnownSkipped: false)
+        let log = DailyStudyLog(dateKey: "2026-11-15", wordsReviewed: 5, wordsLearned: 2, xpEarned: 55, roundsCompleted: 1, studySeconds: 90, correctReviews: 4)
+        let placement = FavoritesBackup.PlacementRecord(cefrLevel: "A2", ceilingFreq: 82, baselineWords: 500)
+
+        let data = try FavoritesBackup.encodeFull(favorites: [fav], flashcards: [card], dailyLogs: [log], placement: placement, exportedAt: now)
+        let decoded = try FavoritesBackup.decodeFull(from: data)
+        XCTAssertEqual(decoded.favorites.count, 1)
+        XCTAssertEqual(decoded.flashcards.count, 1)
+        XCTAssertEqual(decoded.flashcards.first?.masteryStage, 2)
+        XCTAssertEqual(decoded.dailyLogs.first?.studySeconds, 90)
+        XCTAssertEqual(decoded.placement?.cefrLevel, "A2")
     }
 }

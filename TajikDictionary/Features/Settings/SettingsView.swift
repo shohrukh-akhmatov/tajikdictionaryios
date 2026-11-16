@@ -7,6 +7,8 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SettingsStore.self) private var settings
     @Query(sort: \FavoriteItem.addedAt, order: .reverse) private var favorites: [FavoriteItem]
+    @Query private var flashcards: [FlashcardProgress]
+    @Query private var dailyLogs: [DailyStudyLog]
     @State private var info: DictionaryInfo?
     @State private var exportDocument: FavoritesBackupDocument?
     @State private var isExporting = false
@@ -73,18 +75,30 @@ struct SettingsView: View {
 
                 Section(String(localized: "Backup & Transfer")) {
                     Button {
-                        if let data = try? FavoritesBackup.encode(favorites) {
+                        let placement = settings.hasCompletedPlacement
+                            ? FavoritesBackup.PlacementRecord(
+                                cefrLevel: settings.placementLevelRaw,
+                                ceilingFreq: settings.placementCeilingFreq,
+                                baselineWords: settings.placementBaselineWords
+                            )
+                            : nil
+                        if let data = try? FavoritesBackup.encodeFull(
+                            favorites: favorites,
+                            flashcards: flashcards,
+                            dailyLogs: dailyLogs,
+                            placement: placement
+                        ) {
                             exportDocument = FavoritesBackupDocument(data: data)
                             isExporting = true
                         }
                     } label: {
-                        Label(String(localized: "Export saved words (JSON)"), systemImage: "square.and.arrow.up")
+                        Label(String(localized: "Export learning & saved words (JSON)"), systemImage: "square.and.arrow.up")
                     }
 
                     Button {
                         isImporting = true
                     } label: {
-                        Label(String(localized: "Import saved words (JSON)"), systemImage: "square.and.arrow.down")
+                        Label(String(localized: "Import backup (JSON)"), systemImage: "square.and.arrow.down")
                     }
 
                     if let backupMessage {
@@ -142,8 +156,8 @@ struct SettingsView: View {
                     defer { if scoped { url.stopAccessingSecurityScopedResource() } }
                     do {
                         let data = try Data(contentsOf: url)
-                        let records = try FavoritesBackup.decodeRecords(from: data)
-                        for record in records {
+                        let full = try FavoritesBackup.decodeFull(from: data)
+                        for record in full.favorites {
                             let targetId = record.entryId
                             let existing = (try? modelContext.fetch(
                                 FetchDescriptor<FavoriteItem>(predicate: #Predicate { $0.entryId == targetId })
@@ -162,8 +176,73 @@ struct SettingsView: View {
                                 ))
                             }
                         }
+                        for card in full.flashcards {
+                            let targetId = card.entryId
+                            let existing = (try? modelContext.fetch(
+                                FetchDescriptor<FlashcardProgress>(predicate: #Predicate { $0.entryId == targetId })
+                            ))?.first
+                            let nextDate = Date(timeIntervalSince1970: Double(card.nextReviewAt) / 1000.0)
+                            let lastDate = card.lastReviewedAt.map { Date(timeIntervalSince1970: Double($0) / 1000.0) }
+                            if let existing {
+                                existing.repetitions = card.repetitions
+                                existing.intervalDays = card.intervalDays
+                                existing.easeFactor = card.easeFactor
+                                existing.nextReviewAt = nextDate
+                                existing.masteryStage = card.masteryStage
+                                existing.stabilityDays = card.stabilityDays
+                                existing.lapses = card.lapses
+                                existing.lastReviewedAt = lastDate
+                                existing.isKnownSkipped = card.isKnownSkipped
+                            } else {
+                                modelContext.insert(FlashcardProgress(
+                                    entryId: card.entryId,
+                                    lang: card.lang,
+                                    headword: card.headword,
+                                    preview: card.preview,
+                                    repetitions: card.repetitions,
+                                    intervalDays: card.intervalDays,
+                                    easeFactor: card.easeFactor,
+                                    nextReviewAt: nextDate,
+                                    masteryStage: card.masteryStage,
+                                    stabilityDays: card.stabilityDays,
+                                    lapses: card.lapses,
+                                    lastReviewedAt: lastDate,
+                                    isKnownSkipped: card.isKnownSkipped
+                                ))
+                            }
+                        }
+                        for log in full.dailyLogs {
+                            let key = log.dateKey
+                            let existing = (try? modelContext.fetch(
+                                FetchDescriptor<DailyStudyLog>(predicate: #Predicate { $0.dateKey == key })
+                            ))?.first
+                            if let existing {
+                                existing.wordsReviewed = max(existing.wordsReviewed, log.wordsReviewed)
+                                existing.wordsLearned = max(existing.wordsLearned, log.wordsLearned)
+                                existing.xpEarned = max(existing.xpEarned, log.xpEarned)
+                                existing.roundsCompleted = max(existing.roundsCompleted, log.roundsCompleted)
+                                existing.studySeconds = max(existing.studySeconds, log.studySeconds)
+                                existing.correctReviews = max(existing.correctReviews, log.correctReviews)
+                            } else {
+                                modelContext.insert(DailyStudyLog(
+                                    dateKey: log.dateKey,
+                                    wordsReviewed: log.wordsReviewed,
+                                    wordsLearned: log.wordsLearned,
+                                    xpEarned: log.xpEarned,
+                                    roundsCompleted: log.roundsCompleted,
+                                    studySeconds: log.studySeconds,
+                                    correctReviews: log.correctReviews
+                                ))
+                            }
+                        }
+                        if let p = full.placement, let cefr = CefrLevel(rawValue: p.cefrLevel) {
+                            settings.placementLevelRaw = cefr.rawValue
+                            settings.placementCeilingFreq = p.ceilingFreq
+                            settings.placementBaselineWords = p.baselineWords
+                            settings.hasCompletedPlacement = true
+                        }
                         try? modelContext.save()
-                        backupMessage = String(localized: "Imported \(records.count) saved words")
+                        backupMessage = String(localized: "Imported \(full.favorites.count) saved & \(full.flashcards.count) studied words")
                     } catch {
                         backupMessage = String(localized: "Could not read backup file")
                     }

@@ -3,12 +3,16 @@ import SwiftUI
 
 enum GameDeckSource: Hashable {
     case smartMix
+    case dueReviews
+    case weakWords
     case saved
     case topic(String)
 
     var title: String {
         switch self {
         case .smartMix: return String(localized: "Smart Mix")
+        case .dueReviews: return String(localized: "Due Reviews")
+        case .weakWords: return String(localized: "Weak Words")
         case .saved: return String(localized: "Saved")
         case .topic(let topic): return topic.capitalized
         }
@@ -49,6 +53,7 @@ struct WordGameView: View {
     @State private var totalAttempts: Int = 0
     @State private var newlyLearnedInRound: Int = 0
     @State private var roundFinished = false
+    @State private var lexiconStats: LexiconStats = .fallback
     @State private var speaker = SpeechSpeaker()
 
     private var currentItem: GameRoundItem? { queue.first }
@@ -421,7 +426,10 @@ struct WordGameView: View {
         let summary = WordGameEngine.computeSummary(
             progress: progress.map(\.snapshot),
             logs: dailyLogs.map(\.snapshot),
-            dailyGoal: settings.dailyGoal
+            dailyGoal: settings.dailyGoal,
+            lexiconStats: lexiconStats,
+            placementLevel: settings.placementLevel,
+            placementBaselineWords: settings.placementBaselineWords
         )
 
         return VStack(spacing: 20) {
@@ -443,6 +451,24 @@ struct WordGameView: View {
                 statPill(value: "+\(sessionXp)", label: "XP", color: .blue)
                 statPill(value: "\(accuracy)%", label: String(localized: "Accuracy"), color: .green)
                 statPill(value: "\(summary.currentStreakDays)d", label: String(localized: "Streak"), color: .orange)
+            }
+
+            HStack(spacing: 10) {
+                Text("\(summary.cefrLevel.rawValue) · \(String(format: "%.1f%%", summary.textRecognitionPercent)) \(String(localized: "Text recognized"))")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.accentColor.opacity(0.12), in: Capsule())
+
+                if summary.todayReviewed >= summary.dailyGoal {
+                    Label(String(localized: "Daily goal met"), systemImage: "checkmark.circle.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.green)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.green.opacity(0.12), in: Capsule())
+                }
             }
 
             if newlyLearnedInRound > 0 {
@@ -511,10 +537,12 @@ struct WordGameView: View {
         newlyLearnedInRound = 0
         resetCardInputs()
 
+        lexiconStats = (try? await repository.lexiconStats()) ?? .fallback
         let mode = settings.mode
         let progressById = Dictionary(uniqueKeysWithValues: progress.map { ($0.entryId, $0.snapshot) })
         let ceilingFreq = settings.hasCompletedPlacement ? settings.placementCeilingFreq : 100
         let pool: [WordCardCandidate]
+        let selected: [WordCardCandidate]
         switch source {
         case .smartMix:
             let frontierPool = (try? await repository.learningCandidates(
@@ -539,21 +567,54 @@ struct WordGameView: View {
                 }
             }
             pool = merged
+            selected = WordGameEngine.buildRoundQueue(
+                candidates: pool,
+                progressById: progressById,
+                now: .now,
+                roundSize: WordGameEngine.defaultRoundSize,
+                targetMaxFrequency: ceilingFreq
+            )
+        case .dueReviews:
+            let activeIds = progress.filter { !$0.isKnownSkipped && $0.lastReviewedAt != nil }.map(\.entryId)
+            pool = (try? await repository.learningCandidates(forEntryIds: activeIds, mode: mode)) ?? []
+            selected = WordGameEngine.buildDueRoundQueue(
+                candidates: pool,
+                progressById: progressById,
+                now: .now,
+                roundSize: WordGameEngine.defaultRoundSize
+            )
+        case .weakWords:
+            let weakIds = progress.filter {
+                !$0.isKnownSkipped && ($0.lapses > 0 || ($0.lastReviewedAt != nil && $0.masteryStage <= 1) || $0.stabilityDays < 2.0)
+            }.map(\.entryId)
+            pool = (try? await repository.learningCandidates(forEntryIds: weakIds, mode: mode)) ?? []
+            selected = WordGameEngine.buildWeakRoundQueue(
+                candidates: pool,
+                progressById: progressById,
+                roundSize: WordGameEngine.defaultRoundSize
+            )
         case .topic(let topic):
             pool = (try? await repository.learningCandidates(topic: topic, mode: mode, limit: 450)) ?? []
+            selected = WordGameEngine.buildRoundQueue(
+                candidates: pool,
+                progressById: progressById,
+                now: .now,
+                roundSize: WordGameEngine.defaultRoundSize,
+                targetMaxFrequency: nil
+            )
         case .saved:
             let ids = favorites.map(\.entryId)
             pool = (try? await repository.learningCandidates(forEntryIds: ids, mode: mode)) ?? []
+            selected = WordGameEngine.buildRoundQueue(
+                candidates: pool,
+                progressById: progressById,
+                now: .now,
+                roundSize: WordGameEngine.defaultRoundSize,
+                targetMaxFrequency: nil
+            )
         }
 
         let fallbackDistractors = (try? await repository.topTajikHeadwords(limit: 60)) ?? []
-        let selected = WordGameEngine.buildRoundQueue(
-            candidates: pool,
-            progressById: progressById,
-            now: .now,
-            roundSize: WordGameEngine.defaultRoundSize,
-            targetMaxFrequency: source == .smartMix ? ceilingFreq : nil
-        )
         let items = WordGameEngine.makeRoundItems(
             selected: selected,
             allPool: pool,

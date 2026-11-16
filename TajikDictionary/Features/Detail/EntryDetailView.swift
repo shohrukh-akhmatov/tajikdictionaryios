@@ -30,6 +30,7 @@ struct EntryDetailView: View {
     @Environment(SettingsStore.self) private var settings
 
     @Query private var favorites: [FavoriteItem]
+    @Query private var progressItems: [FlashcardProgress]
     @State private var detail: EntryDetail?
     @State private var isLoading = true
     @State private var speaker = SpeechSpeaker()
@@ -38,9 +39,11 @@ struct EntryDetailView: View {
     init(entryId: Int64) {
         self.entryId = entryId
         _favorites = Query(filter: #Predicate<FavoriteItem> { $0.entryId == entryId })
+        _progressItems = Query(filter: #Predicate<FlashcardProgress> { $0.entryId == entryId })
     }
 
     private var isFavorite: Bool { !favorites.isEmpty }
+    private var cardProgress: FlashcardProgress? { progressItems.first }
 
     var body: some View {
         Group {
@@ -163,6 +166,30 @@ struct EntryDetailView: View {
                 }
             }
 
+            if detail.entry.language == .tajik {
+                Section(String(localized: "Learning Progress")) {
+                    HStack {
+                        Text(learningStatusLabel(for: cardProgress))
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(cardProgress?.isKnownSkipped == true || (cardProgress?.masteryStage ?? 0) >= 4 ? .green : .secondary)
+                        Spacer()
+                    }
+                    Button {
+                        queueForPractice(detail)
+                    } label: {
+                        Label(
+                            cardProgress == nil ? String(localized: "Add to Learning Queue") : String(localized: "Practice in Trainer"),
+                            systemImage: "sparkles"
+                        )
+                    }
+                    Button {
+                        markKnown(detail)
+                    } label: {
+                        Label(String(localized: "Mark as Known"), systemImage: "checkmark.circle")
+                    }
+                }
+            }
+
             if !detail.examples.isEmpty {
                 Section(String(localized: "Examples")) {
                     ForEach(detail.examples) { ex in
@@ -236,5 +263,74 @@ struct EntryDetailView: View {
             lines.append("\(lang.tag): \(list.map(\.headword).joined(separator: ", "))")
         }
         return lines.joined(separator: "\n")
+    }
+
+    private func learningStatusLabel(for item: FlashcardProgress?) -> String {
+        guard let item else { return String(localized: "Not studied yet") }
+        if item.isKnownSkipped || item.masteryStage >= 4 {
+            return String(localized: "Mastered / Known")
+        }
+        return "\(String(localized: "Learning")) · \(String(localized: "Stage")) \(item.masteryStage)/4"
+    }
+
+    private func queueForPractice(_ detail: EntryDetail) {
+        let now = Date.now
+        let preview = previewString(for: detail)
+        if let existing = cardProgress {
+            existing.isKnownSkipped = false
+            existing.masteryStage = 0
+            existing.stabilityDays = 0.25
+            existing.nextReviewAt = now
+            existing.lastReviewedAt = existing.lastReviewedAt ?? now
+            existing.preview = preview
+        } else {
+            modelContext.insert(FlashcardProgress(
+                entryId: detail.entry.id,
+                lang: detail.entry.language.rawValue,
+                headword: detail.entry.headword,
+                preview: preview,
+                repetitions: 0,
+                intervalDays: 0,
+                easeFactor: 2.5,
+                nextReviewAt: now,
+                masteryStage: 0,
+                stabilityDays: 0.25,
+                lapses: 0,
+                lastReviewedAt: now,
+                isKnownSkipped: false
+            ))
+        }
+        try? modelContext.save()
+    }
+
+    private func markKnown(_ detail: EntryDetail) {
+        let now = Date.now
+        let future = now.addingTimeInterval(180 * WordGameEngine.daySeconds)
+        let preview = previewString(for: detail)
+        if let existing = cardProgress {
+            existing.isKnownSkipped = true
+            existing.masteryStage = 4
+            existing.stabilityDays = 180
+            existing.nextReviewAt = future
+            existing.lastReviewedAt = now
+            existing.preview = preview
+        } else {
+            modelContext.insert(FlashcardProgress(
+                entryId: detail.entry.id,
+                lang: detail.entry.language.rawValue,
+                headword: detail.entry.headword,
+                preview: preview,
+                repetitions: 1,
+                intervalDays: 180,
+                easeFactor: 2.5,
+                nextReviewAt: future,
+                masteryStage: 4,
+                stabilityDays: 180,
+                lapses: 0,
+                lastReviewedAt: now,
+                isKnownSkipped: true
+            ))
+        }
+        try? modelContext.save()
     }
 }
