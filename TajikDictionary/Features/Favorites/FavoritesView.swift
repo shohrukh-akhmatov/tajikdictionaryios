@@ -15,25 +15,44 @@ struct FavoritesView: View {
                         systemImage: "star",
                         description: Text(String(localized: "Tap the star on any word to save it here for quick offline review."))
                     )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(AppTheme.background)
                 } else {
-                    List {
-                        ForEach(favorites) { item in
-                            NavigationLink(value: item.entryId) {
-                                WordRowView(
-                                    language: item.language,
-                                    headword: item.headword,
-                                    pos: nil,
-                                    preview: item.preview
-                                )
+                    ScrollView {
+                        AppCard {
+                            ForEach(Array(favorites.enumerated()), id: \.element.entryId) { idx, item in
+                                HStack(spacing: 8) {
+                                    NavigationLink(value: item.entryId) {
+                                        WordRowView(
+                                            language: item.language,
+                                            headword: item.headword,
+                                            pos: nil,
+                                            preview: item.preview
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+
+                                    Button {
+                                        modelContext.delete(item)
+                                    } label: {
+                                        Image(systemName: "star.fill")
+                                            .foregroundStyle(AppTheme.accent)
+                                            .frame(width: 32, height: 32)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel(String(localized: "Remove"))
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+
+                                if idx < favorites.count - 1 {
+                                    Divider().padding(.horizontal, 16)
+                                }
                             }
                         }
-                        .onDelete { offsets in
-                            for index in offsets {
-                                modelContext.delete(favorites[index])
-                            }
-                        }
+                        .padding(16)
                     }
-                    .listStyle(.plain)
+                    .background(AppTheme.background)
                 }
             }
             .navigationTitle(String(localized: "Saved"))

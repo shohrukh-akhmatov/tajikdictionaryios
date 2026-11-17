@@ -125,6 +125,8 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle(String(localized: "Settings"))
+            .scrollContentBackground(.hidden)
+            .background(AppTheme.background)
             .task {
                 info = try? await repository.info()
             }

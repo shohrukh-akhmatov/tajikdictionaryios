@@ -33,8 +33,8 @@ enum Language: String, CaseIterable, Codable, Hashable, Sendable {
     /// Consistent brand badge color adapted for light & dark mode.
     var tagColor: Color {
         switch self {
-        case .tajik: return Color(light: Color(red: 0.0, green: 0.52, blue: 0.24), dark: Color(red: 0.36, green: 0.82, blue: 0.55))
-        case .russian: return Color(light: Color(red: 0.12, green: 0.36, blue: 0.78), dark: Color(red: 0.54, green: 0.71, blue: 1.0))
+        case .tajik: return Color(light: Color(red: 0.031, green: 0.463, blue: 0.325), dark: Color(red: 0.435, green: 0.847, blue: 0.675))
+        case .russian: return Color(light: Color(red: 0.141, green: 0.349, blue: 0.780), dark: Color(red: 0.54, green: 0.71, blue: 1.0))
         case .english: return Color(light: Color(red: 0.76, green: 0.25, blue: 0.05), dark: Color(red: 1.0, green: 0.64, blue: 0.42))
         }
     }

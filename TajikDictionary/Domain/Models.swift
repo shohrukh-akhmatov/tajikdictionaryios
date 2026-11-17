@@ -54,12 +54,13 @@ struct Entry: Identifiable, Hashable, Sendable {
 }
 
 struct Translation: Identifiable, Hashable, Sendable {
-    var id: Int64 { entryId }
+    var id: String { "\(entryId)_\(position)" }
     let entryId: Int64
     let language: Language
     let headword: String
     let pos: PartOfSpeech?
     let note: String?
+    let position: Int
 }
 
 struct Example: Identifiable, Hashable, Sendable {
@@ -73,6 +74,25 @@ struct EntryDetail: Sendable {
     let entry: Entry
     let translations: [Language: [Translation]]
     let examples: [Example]
+    let homographs: [SearchResult]
+    let synonyms: [SearchResult]
+    let relatedWords: [SearchResult]
+
+    init(
+        entry: Entry,
+        translations: [Language: [Translation]],
+        examples: [Example],
+        homographs: [SearchResult] = [],
+        synonyms: [SearchResult] = [],
+        relatedWords: [SearchResult] = []
+    ) {
+        self.entry = entry
+        self.translations = translations
+        self.examples = examples
+        self.homographs = homographs
+        self.synonyms = synonyms
+        self.relatedWords = relatedWords
+    }
 }
 
 struct DictionaryInfo: Sendable {

@@ -84,21 +84,34 @@ struct StudyView: View {
                     LanguageTag(language: card.language)
                     Text(card.headword)
                         .font(.system(size: 34, weight: .bold))
+                        .foregroundStyle(AppTheme.textPrimary)
                         .multilineTextAlignment(.center)
+                    if card.language == .tajik {
+                        let latin = TajikTransliterator.toLatin(card.headword)
+                        if !latin.isEmpty {
+                            Text("/\(latin)/")
+                                .font(.headline.italic())
+                                .foregroundStyle(AppTheme.accent)
+                        }
+                    }
                     if flipped {
                         Text(card.preview.isEmpty ? "—" : card.preview)
                             .font(.title3)
-                            .foregroundStyle(.tint)
+                            .foregroundStyle(AppTheme.accent)
                             .multilineTextAlignment(.center)
                     } else {
                         Text(String(localized: "Tap card to reveal translation"))
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(24)
-                .background(.background.secondary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .background(AppTheme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(AppTheme.border.opacity(0.7), lineWidth: 1)
+                )
                 .padding(.horizontal)
                 .onTapGesture {
                     flipped.toggle()
@@ -139,6 +152,7 @@ struct StudyView: View {
             }
         }
         .padding(.bottom, 16)
+        .background(AppTheme.background)
         .navigationTitle(selectedTopic.map { "Study: \($0)" } ?? String(localized: "Flashcards"))
         .navigationBarTitleDisplayMode(.inline)
         .task {

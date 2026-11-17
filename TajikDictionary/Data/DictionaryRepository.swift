@@ -280,13 +280,13 @@ actor DictionaryRepository {
         return rows.first
     }
 
-    func detail(id: Int64) throws -> EntryDetail? {
+    func detail(id: Int64, mode: DictionaryMode = .tjRu) throws -> EntryDetail? {
         guard let entry = try entry(id: id) else { return nil }
         let translations = try db.query(
             """
-            SELECT t2.id, t2.lang, t2.headword, t2.pos, t.note
+            SELECT t2.id, t2.lang, t2.headword, t2.pos, t.note, t.position
             FROM translations t JOIN entries t2 ON t2.id = t.to_id
-            WHERE t.from_id = ? ORDER BY t2.lang, t.position
+            WHERE t.from_id = ? ORDER BY t.position, t2.lang
             """,
             bindings: [.int64(id)]
         ) { row in
@@ -295,12 +295,13 @@ actor DictionaryRepository {
                 language: Language(rawValue: row.string(1)) ?? .tajik,
                 headword: row.string(2),
                 pos: row.stringOrNil(3).flatMap(PartOfSpeech.init(rawValue:)),
-                note: row.stringOrNil(4)
+                note: row.stringOrNil(4),
+                position: row.int(5)
             )
         }
 
         var index = 0
-        let examples = try db.query(
+        var examples = try db.query(
             "SELECT tg, ru, en FROM examples WHERE entry_id = ?",
             bindings: [.int64(id)]
         ) { row in
@@ -308,8 +309,117 @@ actor DictionaryRepository {
             return Example(id: index, tg: row.string(0), ru: row.stringOrNil(1), en: row.stringOrNil(2))
         }
 
+        if examples.isEmpty, entry.language != .tajik,
+           let primaryTgId = translations.first(where: { $0.language == .tajik })?.entryId {
+            examples = try db.query(
+                "SELECT tg, ru, en FROM examples WHERE entry_id = ? LIMIT 3",
+                bindings: [.int64(primaryTgId)]
+            ) { row in
+                defer { index += 1 }
+                return Example(id: index, tg: row.string(0), ru: row.stringOrNil(1), en: row.stringOrNil(2))
+            }
+        }
+
+        let entryKey = TextNormalizer.searchKey(entry.headword)
+        let previewPartner = entry.language == .tajik ? mode.partner.rawValue : Language.tajik.rawValue
+
+        let homographs: [SearchResult] = entryKey.isEmpty ? [] : try db.query(
+            """
+            SELECT e2.id, e2.lang, e2.headword, e2.pos,
+                   (SELECT group_concat(h, ', ') FROM (
+                        SELECT t2.headword AS h
+                        FROM translations t JOIN entries t2 ON t2.id = t.to_id
+                        WHERE t.from_id = e2.id AND t2.lang = ?
+                        ORDER BY t.position LIMIT 3)) AS preview
+            FROM entries e2
+            WHERE e2.lang = ? AND e2.search_key = ? AND e2.id != ?
+            ORDER BY e2.frequency DESC, e2.id ASC
+            LIMIT 6
+            """,
+            bindings: [.text(previewPartner), .text(entry.language.rawValue), .text(entryKey), .int64(id)]
+        ) { row in
+            SearchResult(
+                id: row.int64(0),
+                language: Language(rawValue: row.string(1)) ?? .tajik,
+                headword: row.string(2),
+                pos: row.stringOrNil(3).flatMap(PartOfSpeech.init(rawValue:)),
+                preview: row.stringOrNil(4) ?? ""
+            )
+        }
+
+        let synonyms: [SearchResult] = try db.query(
+            """
+            SELECT e2.id, e2.lang, e2.headword, e2.pos,
+                   (SELECT group_concat(h, ', ') FROM (
+                        SELECT t3.headword AS h
+                        FROM translations t JOIN entries t3 ON t3.id = t.to_id
+                        WHERE t.from_id = e2.id AND t3.lang = ?
+                        ORDER BY t.position LIMIT 2)) AS preview,
+                   COUNT(*) AS shared
+            FROM translations t1
+            JOIN translations t_rev ON t_rev.from_id = t1.to_id
+            JOIN entries e2 ON e2.id = t_rev.to_id
+            WHERE t1.from_id = ? AND e2.lang = ? AND e2.id != ? AND e2.search_key != ?
+            GROUP BY e2.id
+            ORDER BY shared DESC, e2.frequency DESC
+            LIMIT 8
+            """,
+            bindings: [.text(previewPartner), .int64(id), .text(entry.language.rawValue), .int64(id), .text(entryKey)]
+        ) { row in
+            SearchResult(
+                id: row.int64(0),
+                language: Language(rawValue: row.string(1)) ?? .tajik,
+                headword: row.string(2),
+                pos: row.stringOrNil(3).flatMap(PartOfSpeech.init(rawValue:)),
+                preview: row.stringOrNil(4) ?? ""
+            )
+        }
+
+        let synonymIds = Set(synonyms.map(\.id))
+        let homographIds = Set(homographs.map(\.id))
+        let rootKey = entryKey.count >= 6 ? String(entryKey.dropLast()) : entryKey
+        let relatedWords: [SearchResult]
+        if rootKey.count >= 3 {
+            let candidates = try db.query(
+                """
+                SELECT e2.id, e2.lang, e2.headword, e2.pos,
+                       (SELECT group_concat(h, ', ') FROM (
+                            SELECT t2.headword AS h
+                            FROM translations t JOIN entries t2 ON t2.id = t.to_id
+                            WHERE t.from_id = e2.id AND t2.lang = ?
+                            ORDER BY t.position LIMIT 2)) AS preview
+                FROM entries e2
+                WHERE e2.lang = ?
+                  AND e2.search_key >= ?
+                  AND e2.search_key < ? || char(65535)
+                  AND e2.id != ?
+                ORDER BY e2.frequency DESC, length(e2.headword) ASC
+                LIMIT 12
+                """,
+                bindings: [.text(previewPartner), .text(entry.language.rawValue), .text(rootKey), .text(rootKey), .int64(id)]
+            ) { row in
+                SearchResult(
+                    id: row.int64(0),
+                    language: Language(rawValue: row.string(1)) ?? .tajik,
+                    headword: row.string(2),
+                    pos: row.stringOrNil(3).flatMap(PartOfSpeech.init(rawValue:)),
+                    preview: row.stringOrNil(4) ?? ""
+                )
+            }
+            relatedWords = Array(candidates.filter { !synonymIds.contains($0.id) && !homographIds.contains($0.id) }.prefix(8))
+        } else {
+            relatedWords = []
+        }
+
         let grouped = Dictionary(grouping: translations, by: \.language)
-        return EntryDetail(entry: entry, translations: grouped, examples: examples)
+        return EntryDetail(
+            entry: entry,
+            translations: grouped,
+            examples: examples,
+            homographs: homographs,
+            synonyms: synonyms,
+            relatedWords: relatedWords
+        )
     }
 
     func wordOfTheDay(date: Date = .now) throws -> Entry? {

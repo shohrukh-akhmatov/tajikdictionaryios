@@ -9,17 +9,36 @@ struct TopicEntriesView: View {
     @State private var showGame = false
 
     var body: some View {
-        List(entries) { row in
-            NavigationLink(value: row.id) {
-                WordRowView(
-                    language: row.language,
-                    headword: row.headword,
-                    pos: row.pos,
-                    preview: row.preview
-                )
+        ScrollView {
+            if !entries.isEmpty {
+                AppCard {
+                    ForEach(Array(entries.enumerated()), id: \.element.id) { idx, row in
+                        NavigationLink(value: row.id) {
+                            HStack {
+                                WordRowView(
+                                    language: row.language,
+                                    headword: row.headword,
+                                    pos: row.pos,
+                                    preview: row.preview
+                                )
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(AppTheme.textSecondary.opacity(0.6))
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                        }
+                        .buttonStyle(.plain)
+
+                        if idx < entries.count - 1 {
+                            Divider().padding(.horizontal, 16)
+                        }
+                    }
+                }
+                .padding(16)
             }
         }
-        .listStyle(.plain)
+        .background(AppTheme.background)
         .navigationTitle(topic.capitalized)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

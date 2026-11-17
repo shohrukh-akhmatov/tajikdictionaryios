@@ -48,9 +48,9 @@
 
 /* Begin PBXFileReference section */
 		02BDECB6D5C3E2340E9EB311 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		45CA23676F3AE0E127342AEB /* TajikDictionaryWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; name = TajikDictionaryWidget.appex; path = TajikDictionaryWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		45CA23676F3AE0E127342AEB /* TajikDictionaryWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TajikDictionaryWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		4A915EEBB020937E52581F0D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		73A84AF8D44DA766AF5DEB9A /* dictionary.sqlite */ = {isa = PBXFileReference; includeInIndex = 1; name = dictionary.sqlite; path = TajikDictionary/Resources/dictionary.sqlite; sourceTree = "<group>"; };
+		73A84AF8D44DA766AF5DEB9A /* dictionary.sqlite */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file; name = dictionary.sqlite; path = TajikDictionary/Resources/dictionary.sqlite; sourceTree = "<group>"; };
 		7D0A00000000000000000011 /* TajikDictionary.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TajikDictionary.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D0A00000000000000000012 /* TajikDictionaryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TajikDictionaryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8BA57F51C9EF1B7D432A920D /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
@@ -61,15 +61,11 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7D0A00000000000000000021 /* TajikDictionary */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = TajikDictionary;
 			sourceTree = "<group>";
 		};
 		7D0A00000000000000000022 /* TajikDictionaryTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = TajikDictionaryTests;
 			sourceTree = "<group>";
 		};
@@ -109,7 +105,6 @@
 				C90E3B5329609D0FD448B5CA /* WordOfTheDayWidget.swift */,
 				02BDECB6D5C3E2340E9EB311 /* Info.plist */,
 			);
-			name = TajikDictionaryWidget;
 			path = TajikDictionaryWidget;
 			sourceTree = "<group>";
 		};
@@ -480,6 +475,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QFQ4Y77UM9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Config/TajikDictionary-Info.plist";
@@ -512,6 +508,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QFQ4Y77UM9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Config/TajikDictionary-Info.plist";

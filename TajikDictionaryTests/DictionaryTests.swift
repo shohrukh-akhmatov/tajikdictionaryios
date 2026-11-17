@@ -305,4 +305,25 @@ final class DictionaryTests: XCTestCase {
         XCTAssertEqual(decoded.dailyLogs.first?.studySeconds, 90)
         XCTAssertEqual(decoded.placement?.cefrLevel, "A2")
     }
+
+    func testTransliteratorAndDetailSensesHomographsSynonyms() async throws {
+        XCTAssertEqual(TajikTransliterator.toLatin("Салом"), "salom")
+        XCTAssertEqual(TajikTransliterator.toLatin("соҳибӣ"), "sohibī")
+        XCTAssertEqual(TajikTransliterator.toLatin("хӯрдан"), "khūrdan")
+        XCTAssertEqual(TajikTransliterator.toLatin("мекунам"), "mekunam")
+
+        let repo = try DictionaryRepository()
+        let outcome = try await repo.search(query: "соҳибӣ", mode: .tjRu)
+        let nounHit = try XCTUnwrap(outcome.results.first { $0.headword == "соҳибӣ" && $0.pos == .noun })
+        let loadedDetail = try await repo.detail(id: nounHit.id, mode: .tjRu)
+        let detail = try XCTUnwrap(loadedDetail)
+
+        XCTAssertFalse(detail.homographs.isEmpty)
+        XCTAssertTrue(detail.homographs.contains { $0.pos == .adjective })
+        XCTAssertFalse(detail.synonyms.isEmpty)
+        XCTAssertFalse(detail.relatedWords.isEmpty)
+
+        let ruTranslations = detail.translations[.russian] ?? []
+        XCTAssertTrue(Set(ruTranslations.map(\.position)).count >= 2)
+    }
 }

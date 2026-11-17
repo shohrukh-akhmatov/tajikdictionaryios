@@ -12,6 +12,7 @@ struct SearchView: View {
     @State private var query: String = ""
     @State private var searchTask: Task<Void, Never>?
     @State private var navigationPath = NavigationPath()
+    @State private var speaker = SpeechSpeaker()
 
     init(deepLinkEntryId: Binding<Int64?> = .constant(nil)) {
         _deepLinkEntryId = deepLinkEntryId
@@ -24,15 +25,17 @@ struct SearchView: View {
                 VStack(spacing: 10) {
                     ModeSwitcher(mode: $settings.mode)
 
-                    HStack(spacing: 8) {
+                    HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.secondary)
+                            .font(.body.weight(.medium))
+                            .foregroundStyle(AppTheme.accent)
                         TextField(
                             settings.mode == .tjRu
                                 ? String(localized: "Search Tajik or Russian…")
                                 : String(localized: "Search Tajik or English…"),
                             text: $query
                         )
+                        .foregroundStyle(AppTheme.textPrimary)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .submitLabel(.search)
@@ -42,26 +45,37 @@ struct SearchView: View {
                                 query = ""
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(AppTheme.textSecondary)
                             }
                             .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(.quaternary.opacity(0.6), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .frame(height: 46)
+                    .background(AppTheme.cardSubtle, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(
+                                query.isEmpty ? AppTheme.border.opacity(0.8) : AppTheme.accent.opacity(0.45),
+                                lineWidth: 1
+                            )
+                    )
 
                     TajikLettersBar { letter in
                         query += letter
                     }
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(AppTheme.card)
 
                 Divider()
 
                 contentView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(AppTheme.background)
             }
+            .background(AppTheme.background)
             .navigationTitle(String(localized: "Dictionary"))
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: Int64.self) { entryId in
@@ -83,6 +97,9 @@ struct SearchView: View {
                 deepLinkEntryId = nil
             }
         }
+        .onDisappear {
+            speaker.stop()
+        }
         .onChange(of: deepLinkEntryId) { _, entryId in
             guard let entryId else { return }
             navigationPath.append(entryId)
@@ -101,7 +118,7 @@ struct SearchView: View {
     private var contentView: some View {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            homeList
+            homeScrollView
         } else if let suggested = viewModel?.outcome.suggestedMode {
             ContentUnavailableView {
                 Label(String(localized: "Different language detected"), systemImage: "character.bubble")
@@ -116,111 +133,215 @@ struct SearchView: View {
         } else if let outcome = viewModel?.outcome, outcome.results.isEmpty {
             ContentUnavailableView.search(text: trimmed)
         } else if let outcome = viewModel?.outcome {
-            List {
-                if outcome.matchType != .direct {
-                    Section {
+            ScrollView {
+                VStack(spacing: 12) {
+                    if outcome.matchType != .direct {
                         Text(
                             outcome.matchType == .stem
                                 ? "Showing base forms for “\(trimmed)”"
                                 : String(localized: "Showing closest spelling matches")
                         )
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(AppTheme.onAccentSoft)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(AppTheme.accentSoft.opacity(0.65), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+
+                    AppCard {
+                        ForEach(Array(outcome.results.enumerated()), id: \.element.id) { idx, row in
+                            NavigationLink(value: row.id) {
+                                HStack {
+                                    WordRowView(
+                                        language: row.language,
+                                        headword: row.headword,
+                                        pos: row.pos,
+                                        preview: row.preview
+                                    )
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption2.weight(.semibold))
+                                        .foregroundStyle(AppTheme.textSecondary.opacity(0.6))
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                            }
+                            .buttonStyle(.plain)
+
+                            if idx < outcome.results.count - 1 {
+                                Divider()
+                                    .padding(.horizontal, 16)
+                            }
+                        }
                     }
                 }
-                ForEach(outcome.results) { row in
-                    NavigationLink(value: row.id) {
-                        WordRowView(
-                            language: row.language,
-                            headword: row.headword,
-                            pos: row.pos,
-                            preview: row.preview
-                        )
-                    }
-                }
+                .padding(16)
             }
-            .listStyle(.plain)
         }
     }
 
-    private var homeList: some View {
-        List {
-            if let wotd = viewModel?.wordOfTheDay {
-                Section {
-                    NavigationLink(value: wotd.entry.id) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Label(String(localized: "Word of the day"), systemImage: "sparkles")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.tint)
-                                Spacer()
-                                LanguageTag(language: wotd.entry.language)
-                            }
-                            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                                Text(wotd.entry.headword)
-                                    .font(.title2.bold())
-                                if let pos = wotd.entry.pos {
-                                    Text(pos.label)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+    private var homeScrollView: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                if let wotd = viewModel?.wordOfTheDay {
+                    wordOfTheDayCard(wotd)
+                }
+
+                if let topics = viewModel?.topics, !topics.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        SectionHeader(title: String(localized: "Topics"))
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(topics) { item in
+                                    NavigationLink(value: item) {
+                                        HStack(spacing: 8) {
+                                            Text(item.topic.capitalized)
+                                                .font(.subheadline.weight(.medium))
+                                                .foregroundStyle(AppTheme.textPrimary)
+                                            Text("\(item.count)")
+                                                .font(.caption2.weight(.bold))
+                                                .foregroundStyle(AppTheme.onAccentSoft)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(AppTheme.accentSoft, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 9)
+                                        .background(AppTheme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                                .stroke(AppTheme.border.opacity(0.7), lineWidth: 1)
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
-                            if !wotd.preview.isEmpty {
-                                Text(wotd.preview)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
                         }
-                        .padding(.vertical, 4)
                     }
                 }
-            }
 
-            if let topics = viewModel?.topics, !topics.isEmpty {
-                Section(String(localized: "Topics")) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(topics) { item in
-                                NavigationLink(value: item) {
-                                    Text("\(item.topic) (\(item.count))")
-                                        .font(.caption.weight(.medium))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 6)
-                                        .background(.tint.opacity(0.12), in: Capsule())
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
-            }
-
-            if !recent.isEmpty {
-                Section {
-                    ForEach(recent.prefix(15)) { item in
-                        NavigationLink(value: item.entryId) {
-                            WordRowView(
-                                language: item.language,
-                                headword: item.headword,
-                                pos: nil,
-                                preview: item.preview
-                            )
-                        }
-                    }
-                } header: {
-                    HStack {
-                        Text(String(localized: "Recent searches"))
-                        Spacer()
-                        Button(String(localized: "Clear")) {
+                if !recent.isEmpty {
+                    let items = Array(recent.prefix(15))
+                    VStack(alignment: .leading, spacing: 8) {
+                        SectionHeader(
+                            title: String(localized: "Recent searches"),
+                            actionTitle: String(localized: "Clear")
+                        ) {
                             clearHistory()
                         }
-                        .font(.caption)
+
+                        AppCard {
+                            ForEach(Array(items.enumerated()), id: \.element.entryId) { idx, item in
+                                NavigationLink(value: item.entryId) {
+                                    HStack {
+                                        WordRowView(
+                                            language: item.language,
+                                            headword: item.headword,
+                                            pos: nil,
+                                            preview: item.preview
+                                        )
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption2.weight(.semibold))
+                                            .foregroundStyle(AppTheme.textSecondary.opacity(0.6))
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                }
+                                .buttonStyle(.plain)
+
+                                if idx < items.count - 1 {
+                                    Divider()
+                                        .padding(.horizontal, 16)
+                                }
+                            }
+                        }
                     }
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 24)
         }
-        .listStyle(.insetGrouped)
+    }
+
+    private func wordOfTheDayCard(_ wotd: (entry: Entry, preview: String)) -> some View {
+        let canSpeak = speaker.canSpeak(wotd.entry.language) || (!wotd.preview.isEmpty && speaker.canSpeak(settings.mode.partner))
+
+        return AppCard(cornerRadius: 20, borderColor: AppTheme.accent.opacity(0.25)) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    HStack(spacing: 6) {
+                        Image(systemName: "sparkles")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(AppTheme.accent)
+                            .frame(width: 24, height: 24)
+                            .background(AppTheme.accentSoft, in: Circle())
+                        Text(String(localized: "Word of the day"))
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(AppTheme.accent)
+                    }
+                    Spacer()
+                    LanguageTag(language: wotd.entry.language)
+                }
+
+                HStack(alignment: .center) {
+                    NavigationLink(value: wotd.entry.id) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(alignment: .center, spacing: 8) {
+                                Text(wotd.entry.headword)
+                                    .font(.title2.bold())
+                                    .foregroundStyle(AppTheme.textPrimary)
+                                if let pos = wotd.entry.pos {
+                                    PosBadge(label: pos.label)
+                                }
+                            }
+                            if wotd.entry.language == .tajik {
+                                let latin = TajikTransliterator.toLatin(wotd.entry.headword)
+                                if !latin.isEmpty {
+                                    Text("/\(latin)/")
+                                        .font(.subheadline.italic())
+                                        .foregroundStyle(AppTheme.accent)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+
+                    if canSpeak {
+                        Button {
+                            if speaker.canSpeak(wotd.entry.language) {
+                                speaker.speak(wotd.entry.headword, language: wotd.entry.language, rate: settings.avSpeechRate)
+                            } else if !wotd.preview.isEmpty {
+                                let firstMeaning = wotd.preview.split(separator: ",").first.map { String($0).trimmingCharacters(in: .whitespaces) } ?? wotd.preview
+                                speaker.speak(firstMeaning, language: settings.mode.partner, rate: settings.avSpeechRate)
+                            }
+                        } label: {
+                            Image(systemName: "speaker.wave.2.fill")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(AppTheme.accent)
+                                .frame(width: 40, height: 40)
+                                .background(AppTheme.accentSoft, in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(String(localized: "Listen"))
+                    }
+                }
+
+                if !wotd.preview.isEmpty {
+                    Divider()
+                    NavigationLink(value: wotd.entry.id) {
+                        Text(wotd.preview)
+                            .font(.body)
+                            .foregroundStyle(AppTheme.textSecondary)
+                            .lineLimit(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(18)
+        }
     }
 
     private func triggerSearch(_ text: String, mode: DictionaryMode) {

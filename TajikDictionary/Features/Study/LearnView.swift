@@ -34,177 +34,64 @@ struct LearnView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
-                    textRecognitionHeroCard
-                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    wordTrainerCard
 
-                Section {
-                    streakAndLevelCard
-                }
-
-                Section(String(localized: "Word Trainer")) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(selectedSource.title)
-                                    .font(.headline)
-                                Text(
-                                    summary.dueNowCount > 0
-                                        ? "\(summary.dueNowCount) \(String(localized: "words due for periodic review"))"
-                                        : String(localized: "Frequency-ordered new words + smart reviews")
-                                )
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            if summary.dueNowCount > 0 {
-                                Text("\(summary.dueNowCount)")
-                                    .font(.caption.weight(.bold))
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 9)
-                                    .padding(.vertical, 4)
-                                    .background(Color.orange, in: Capsule())
-                            }
-                        }
-
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                deckChip(title: String(localized: "Smart Mix"), source: .smartMix)
-                                if summary.dueNowCount > 0 {
-                                    deckChip(title: "\(String(localized: "Due Reviews")) (\(summary.dueNowCount))", source: .dueReviews)
-                                }
-                                if weakWordsCount > 0 {
-                                    deckChip(title: "\(String(localized: "Weak Words")) (\(weakWordsCount))", source: .weakWords)
-                                }
-                                if !favorites.isEmpty {
-                                    deckChip(title: String(localized: "Saved"), source: .saved)
-                                }
-                                ForEach(topics) { item in
-                                    deckChip(title: item.topic.capitalized, source: .topic(item.topic))
-                                }
-                            }
-                            .padding(.vertical, 2)
-                        }
-
-                        Button {
-                            activeGameSource = selectedSource
-                        } label: {
-                            Label(String(localized: "Start 10-Word Round"), systemImage: "play.fill")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-
-                        NavigationLink {
-                            StudyView(initialTopic: selectedTopicName)
-                        } label: {
-                            Label(String(localized: "Classic Flip Flashcards"), systemImage: "rectangle.stack")
-                                .font(.subheadline)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-
-                Section(String(localized: "Study Analytics")) {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                        analyticsTile(
-                            value: "\(summary.estimatedKnownWords)",
-                            label: String(localized: "Words known"),
-                            icon: "text.book.closed.fill",
-                            color: .blue
-                        )
-                        analyticsTile(
-                            value: WordGameEngine.formatStudyDuration(seconds: summary.totalStudySeconds),
-                            label: String(localized: "Time studied"),
-                            icon: "clock.fill",
-                            color: .purple
-                        )
-                        analyticsTile(
-                            value: "\(summary.activeDaysCount)",
-                            label: String(localized: "Active days"),
-                            icon: "calendar",
-                            color: .orange
-                        )
-                        analyticsTile(
-                            value: "\(summary.overallAccuracyPercent)%",
-                            label: "\(summary.totalReviews) \(String(localized: "reviews"))",
-                            icon: "target",
-                            color: .green
-                        )
-                    }
-                    .padding(.vertical, 4)
-
-                    sevenDayChart
-                }
-
-                Section(String(localized: "Vocabulary Progress")) {
-                    HStack(spacing: 12) {
-                        vocabStat(count: summary.encounteredCount, label: String(localized: "Seen"), color: .blue)
-                        vocabStat(count: summary.learningCount, label: String(localized: "Learning"), color: .orange)
-                        vocabStat(count: summary.masteredCount, label: String(localized: "Mastered"), color: .green)
-                    }
-                    .padding(.vertical, 4)
-
-                    ForEach(summary.tierBreakdown) { tier in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(tier.label)
-                                    .font(.caption.weight(.medium))
-                                Spacer()
-                                Text("\(tier.knownCount) / \(tier.totalCount)")
-                                    .font(.caption.monospacedDigit())
-                                    .foregroundStyle(.secondary)
-                            }
-                            ProgressView(
-                                value: Double(tier.knownCount),
-                                total: Double(max(1, tier.totalCount))
-                            )
-                        }
+                    AppCard {
+                        textRecognitionHeroCard
+                            .padding(16)
                     }
 
-                    NavigationLink {
-                        VocabularyListView()
-                    } label: {
-                        LabeledContent(
-                            String(localized: "My Vocabulary"),
-                            value: "\(progress.count)"
-                        )
+                    AppCard {
+                        streakAndLevelCard
+                            .padding(16)
                     }
-                }
 
-                Section(String(localized: "Achievements")) {
+                    AppCard {
+                        studyAnalyticsCard
+                            .padding(16)
+                    }
+
+                    AppCard {
+                        vocabularyProgressCard
+                            .padding(16)
+                    }
+
+                    SectionHeader(title: String(localized: "Achievements"))
+
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                         ForEach(summary.badges) { badge in
-                            HStack(spacing: 10) {
-                                Image(systemName: badge.systemImage)
-                                    .font(.title3)
-                                    .foregroundStyle(badge.unlocked ? Color.accentColor : .secondary)
-                                    .frame(width: 30)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(badge.title)
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundStyle(badge.unlocked ? .primary : .secondary)
-                                    Text(badge.subtitle)
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(2)
+                            AppCard(cornerRadius: 16) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: badge.systemImage)
+                                        .font(.subheadline)
+                                        .foregroundStyle(badge.unlocked ? AppTheme.accent : AppTheme.textSecondary)
+                                        .frame(width: 34, height: 34)
+                                        .background(
+                                            badge.unlocked ? AppTheme.accentSoft : AppTheme.cardSubtle,
+                                            in: Circle()
+                                        )
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(badge.title)
+                                            .font(.caption.weight(.bold))
+                                            .foregroundStyle(badge.unlocked ? AppTheme.textPrimary : AppTheme.textSecondary)
+                                        Text(badge.subtitle)
+                                            .font(.caption2)
+                                            .foregroundStyle(AppTheme.textSecondary)
+                                            .lineLimit(2)
+                                    }
+                                    Spacer(minLength: 0)
                                 }
-                                Spacer(minLength: 0)
+                                .padding(12)
                             }
-                            .padding(10)
-                            .background(
-                                badge.unlocked ? Color.accentColor.opacity(0.1) : Color.secondary.opacity(0.08),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            )
-                            .opacity(badge.unlocked ? 1.0 : 0.65)
+                            .opacity(badge.unlocked ? 1.0 : 0.6)
                         }
                     }
-                    .padding(.vertical, 4)
                 }
+                .padding(16)
             }
-            .listStyle(.insetGrouped)
+            .background(AppTheme.background)
             .navigationTitle(String(localized: "Learn"))
             .task {
                 topics = (try? await repository.topics()) ?? []
@@ -227,35 +114,109 @@ struct LearnView: View {
         return nil
     }
 
+    private var wordTrainerCard: some View {
+        AppCard(cornerRadius: 20, borderColor: AppTheme.accent.opacity(0.25)) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(localized: "Word Trainer"))
+                            .font(.title3.bold())
+                            .foregroundStyle(AppTheme.textPrimary)
+                        Text(
+                            summary.dueNowCount > 0
+                                ? "\(summary.dueNowCount) \(String(localized: "words due for periodic review"))"
+                                : String(localized: "Frequency-ordered new words + smart reviews")
+                        )
+                        .font(.subheadline)
+                        .foregroundStyle(AppTheme.textSecondary)
+                    }
+                    Spacer()
+                    if summary.dueNowCount > 0 {
+                        Text("\(summary.dueNowCount)")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Color.orange, in: Capsule())
+                    }
+                }
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        deckChip(title: String(localized: "Smart Mix"), source: .smartMix)
+                        if summary.dueNowCount > 0 {
+                            deckChip(title: "\(String(localized: "Due Reviews")) (\(summary.dueNowCount))", source: .dueReviews)
+                        }
+                        if weakWordsCount > 0 {
+                            deckChip(title: "\(String(localized: "Weak Words")) (\(weakWordsCount))", source: .weakWords)
+                        }
+                        if !favorites.isEmpty {
+                            deckChip(title: String(localized: "Saved"), source: .saved)
+                        }
+                        ForEach(topics) { item in
+                            deckChip(title: item.topic.capitalized, source: .topic(item.topic))
+                        }
+                    }
+                }
+
+                Button {
+                    activeGameSource = selectedSource
+                } label: {
+                    Label(String(localized: "Start 10-Word Round"), systemImage: "play.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                NavigationLink {
+                    StudyView(initialTopic: selectedTopicName)
+                } label: {
+                    Label(String(localized: "Classic Flip Flashcards"), systemImage: "rectangle.stack")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(AppTheme.cardSubtle, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .foregroundStyle(AppTheme.textPrimary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(18)
+        }
+    }
+
     private var textRecognitionHeroCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .stroke(Color.secondary.opacity(0.2), lineWidth: 9)
+                        .stroke(AppTheme.cardSubtle, lineWidth: 9)
                     Circle()
                         .trim(from: 0, to: min(1.0, summary.textRecognitionPercent / 100.0))
-                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                        .stroke(AppTheme.accent, style: StrokeStyle(lineWidth: 9, lineCap: .round))
                         .rotationEffect(.degrees(-90))
+                        .animation(.easeOut(duration: 0.6), value: summary.textRecognitionPercent)
                     VStack(spacing: 0) {
                         Text(String(format: "%.0f%%", summary.textRecognitionPercent))
                             .font(.title3.bold())
+                            .foregroundStyle(AppTheme.textPrimary)
                         Text(summary.cefrLevel.rawValue)
                             .font(.caption2.weight(.bold))
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(AppTheme.accent)
                     }
                 }
-                .frame(width: 78, height: 78)
+                .frame(width: 82, height: 82)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(String(localized: "Everyday Tajik recognized"))
                         .font(.headline)
+                        .foregroundStyle(AppTheme.textPrimary)
                     Text("\(summary.cefrLevel.rawValue) · \(summary.cefrLevel.title)")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(AppTheme.accent)
                     Text("\(summary.estimatedKnownWords) / \(summary.totalLexiconCount) \(String(localized: "words"))")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
                 Spacer(minLength: 0)
             }
@@ -275,10 +236,94 @@ struct LearnView: View {
                         .font(.caption)
                 }
                 .font(.subheadline.weight(.medium))
+                .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
         }
-        .padding(.vertical, 6)
+    }
+
+    private var studyAnalyticsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(String(localized: "Study Analytics"))
+                .font(.headline)
+                .foregroundStyle(AppTheme.textPrimary)
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                analyticsTile(
+                    value: "\(summary.estimatedKnownWords)",
+                    label: String(localized: "Words known"),
+                    icon: "text.book.closed.fill",
+                    color: AppTheme.accent
+                )
+                analyticsTile(
+                    value: WordGameEngine.formatStudyDuration(seconds: summary.totalStudySeconds),
+                    label: String(localized: "Time studied"),
+                    icon: "clock.fill",
+                    color: .purple
+                )
+                analyticsTile(
+                    value: "\(summary.activeDaysCount)",
+                    label: String(localized: "Active days"),
+                    icon: "calendar",
+                    color: .orange
+                )
+                analyticsTile(
+                    value: "\(summary.overallAccuracyPercent)%",
+                    label: "\(summary.totalReviews) \(String(localized: "reviews"))",
+                    icon: "target",
+                    color: AppTheme.accent
+                )
+            }
+
+            sevenDayChart
+        }
+    }
+
+    private var vocabularyProgressCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(String(localized: "Vocabulary Progress"))
+                    .font(.headline)
+                    .foregroundStyle(AppTheme.textPrimary)
+                Spacer()
+                NavigationLink {
+                    VocabularyListView()
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("\(String(localized: "My Vocabulary")) (\(progress.count))")
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(AppTheme.accent)
+                }
+            }
+
+            HStack(spacing: 10) {
+                vocabStat(count: summary.encounteredCount, label: String(localized: "Seen"), color: .blue)
+                vocabStat(count: summary.learningCount, label: String(localized: "Learning"), color: .orange)
+                vocabStat(count: summary.masteredCount, label: String(localized: "Mastered"), color: AppTheme.accent)
+            }
+
+            ForEach(summary.tierBreakdown) { tier in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(tier.label)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(AppTheme.textPrimary)
+                        Spacer()
+                        Text("\(tier.knownCount) / \(tier.totalCount)")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(AppTheme.textSecondary)
+                    }
+                    ProgressView(
+                        value: Double(tier.knownCount),
+                        total: Double(max(1, tier.totalCount))
+                    )
+                    .tint(AppTheme.accent)
+                }
+            }
+        }
     }
 
     private var sevenDayChart: some View {
@@ -286,7 +331,7 @@ struct LearnView: View {
         return VStack(alignment: .leading, spacing: 8) {
             Text(String(localized: "Last 7 days"))
                 .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.textSecondary)
 
             HStack(alignment: .bottom, spacing: 8) {
                 ForEach(summary.recent7Days) { day in
@@ -294,25 +339,24 @@ struct LearnView: View {
                     VStack(spacing: 4) {
                         Text("\(day.wordsReviewed)")
                             .font(.caption2.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.textSecondary)
                             .opacity(day.wordsReviewed > 0 ? 1 : 0)
-                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
                             .fill(
                                 day.metGoal
-                                    ? Color.green
-                                    : (day.wordsReviewed > 0 ? Color.accentColor : Color.secondary.opacity(0.2))
+                                    ? AppTheme.accent
+                                    : (day.wordsReviewed > 0 ? AppTheme.accent.opacity(0.55) : AppTheme.cardSubtle)
                             )
-                            .frame(height: 54 * fraction)
+                            .frame(width: 22, height: 54 * fraction)
                         Text(day.shortLabel)
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
                     .frame(maxWidth: .infinity)
                 }
             }
             .frame(height: 88, alignment: .bottom)
         }
-        .padding(.vertical, 4)
     }
 
     private func analyticsTile(value: String, label: String, icon: String, color: Color) -> some View {
@@ -324,40 +368,47 @@ struct LearnView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
                     .font(.headline.monospacedDigit())
+                    .foregroundStyle(AppTheme.textPrimary)
                 Text(label)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.textSecondary)
                     .lineLimit(1)
             }
             Spacer(minLength: 0)
         }
-        .padding(10)
-        .background(color.opacity(0.09), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .padding(12)
+        .background(color.opacity(0.09), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var streakAndLevelCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                HStack(spacing: 8) {
+                HStack(spacing: 10) {
                     Image(systemName: "flame.fill")
-                        .font(.title2)
-                        .foregroundStyle(summary.currentStreakDays > 0 ? .orange : .secondary)
+                        .font(.title3)
+                        .foregroundStyle(summary.currentStreakDays > 0 ? .orange : AppTheme.textSecondary)
+                        .frame(width: 40, height: 40)
+                        .background(
+                            (summary.currentStreakDays > 0 ? Color.orange.opacity(0.14) : AppTheme.cardSubtle),
+                            in: Circle()
+                        )
                     VStack(alignment: .leading, spacing: 1) {
                         Text("\(summary.currentStreakDays) \(String(localized: "day streak"))")
                             .font(.headline)
+                            .foregroundStyle(AppTheme.textPrimary)
                         Text("\(String(localized: "Best")): \(summary.longestStreakDays)d")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.textSecondary)
                     }
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("Lv. \(summary.level) · \(summary.levelTitle)")
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(AppTheme.accent)
                     Text("\(summary.totalXp) XP")
                         .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
             }
 
@@ -365,35 +416,36 @@ struct LearnView: View {
                 HStack {
                     Text(String(localized: "Today's goal"))
                         .font(.caption.weight(.medium))
+                        .foregroundStyle(AppTheme.textSecondary)
                     Spacer()
                     Text("\(summary.todayReviewed) / \(summary.dailyGoal)")
                         .font(.caption.monospacedDigit().weight(.semibold))
-                        .foregroundStyle(summary.todayReviewed >= summary.dailyGoal ? .green : .secondary)
+                        .foregroundStyle(summary.todayReviewed >= summary.dailyGoal ? AppTheme.accent : AppTheme.textSecondary)
                 }
                 ProgressView(
                     value: Double(min(summary.todayReviewed, summary.dailyGoal)),
                     total: Double(max(1, summary.dailyGoal))
                 )
-                .tint(summary.todayReviewed >= summary.dailyGoal ? .green : Color.accentColor)
+                .tint(AppTheme.accent)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(String(localized: "Level progress"))
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.textSecondary)
                     Spacer()
                     Text("\(summary.xpInCurrentLevel) / \(summary.xpForNextLevel) XP")
                         .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.textSecondary)
                 }
                 ProgressView(
                     value: Double(summary.xpInCurrentLevel),
                     total: Double(summary.xpForNextLevel)
                 )
+                .tint(AppTheme.accent)
             }
         }
-        .padding(.vertical, 6)
     }
 
     private func deckChip(title: String, source: GameDeckSource) -> some View {
@@ -403,11 +455,12 @@ struct LearnView: View {
         } label: {
             Text(active ? "✓ \(title)" : title)
                 .font(.caption.weight(.semibold))
+                .foregroundStyle(active ? AppTheme.onAccentSoft : AppTheme.textPrimary)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 7)
+                .padding(.vertical, 8)
                 .background(
-                    active ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.12),
-                    in: Capsule()
+                    active ? AppTheme.accentSoft : AppTheme.cardSubtle,
+                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
                 )
         }
         .buttonStyle(.plain)
@@ -420,11 +473,11 @@ struct LearnView: View {
                 .foregroundStyle(color)
             Text(label)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.textSecondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .padding(.vertical, 10)
+        .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 
