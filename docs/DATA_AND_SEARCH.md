@@ -122,11 +122,12 @@ search returns no results and the UI shows a hint chip: *"Looks like English —
 ```sql
 SELECT e.id, e.lang, e.headword, e.pos,
        (SELECT group_concat(h, ', ') FROM (
-            SELECT t2.headword AS h
-            FROM translations t JOIN entries t2 ON t2.id = t.to_id
-            WHERE t.from_id = e.id
-              AND t2.lang = CASE WHEN e.lang = 'tg' THEN :partner ELSE 'tg' END
-            ORDER BY t.position LIMIT 4)) AS preview
+            SELECT pe.headword AS h, MIN(pt.position) AS p, MIN(pt.id) AS first_id
+            FROM translations pt JOIN entries pe ON pe.id = pt.to_id
+            WHERE pt.from_id = e.id
+              AND pe.lang = CASE WHEN e.lang = 'tg' THEN :partner ELSE 'tg' END
+            GROUP BY pe.headword                   -- collapse homograph targets ("ташаккур" ×2)
+            ORDER BY p, first_id LIMIT 4)) AS preview
 FROM entries e
 WHERE e.lang IN (:langs)                       -- from §4.1
   AND e.search_key >= :key
@@ -141,6 +142,10 @@ LIMIT 50;
 * `:partner` = `ru` in `TJK ⇄ RUS`, `en` in `TJK ⇄ ENG`.
 * Debounce input by **150 ms**; empty query → show Home (word of the day + recent searches).
 * Performance budget: < 16 ms per query on a mid-range device for 10k entries (prefix B-tree scan).
+* Fallback order when there's no exact hit: stem hints → 1–2-edit typo matches → **word by word**
+  (multi-word queries such as `добрый день` / `good morning` that aren't entries: each word is looked up
+  exactly, then by stem, then by prefix, kept in query order; the UI says "Phrase not found — showing
+  each word separately").
 
 ### 4.3 Entry detail
 

@@ -73,6 +73,27 @@ final class DictionaryTests: XCTestCase {
         XCTAssertTrue(topics.contains { $0.topic == "verbs" })
     }
 
+    func testPhraseFallbackAndDedupedPreviews() async throws {
+        let repo = try DictionaryRepository()
+
+        // Phrases that aren't entries fall back to word-by-word lookups in query order.
+        let ru = try await repo.search(query: "добрый день", mode: .tjRu)
+        XCTAssertEqual(ru.matchType, .words)
+        XCTAssertEqual(ru.results.prefix(2).map(\.headword), ["добрый", "день"])
+
+        let en = try await repo.search(query: "good morning", mode: .tjEn)
+        XCTAssertEqual(en.matchType, .words)
+        XCTAssertTrue(en.results.contains { $0.headword == "good" })
+        XCTAssertTrue(en.results.contains { $0.headword == "morning" })
+
+        // Two Tajik homographs "ташаккур" must not show up twice in the preview.
+        let thanks = try await repo.search(query: "спасибо", mode: .tjRu)
+        let preview = try XCTUnwrap(thanks.results.first { $0.headword == "спасибо" }).preview
+        let parts = preview.components(separatedBy: ", ")
+        XCTAssertEqual(parts.count, Set(parts).count, "duplicate words in preview: \(preview)")
+        XCTAssertTrue(parts.contains("ташаккур"))
+    }
+
     func testFlashcardSchedulerSm2Intervals() {
         let now = Date(timeIntervalSince1970: 1_000_000)
         let (first, _) = FlashcardScheduler.next(current: FlashcardState(), rating: .good, now: now)

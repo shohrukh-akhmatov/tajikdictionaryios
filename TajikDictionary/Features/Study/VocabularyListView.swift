@@ -110,6 +110,7 @@ struct VocabularyListView: View {
             }
         }
         .searchable(text: $searchText, prompt: Text(String(localized: "Filter vocabulary")))
+        .scrollDismissesKeyboard(.immediately)
         .scrollContentBackground(.hidden)
         .background(AppTheme.background)
         .navigationTitle(String(localized: "My Vocabulary"))

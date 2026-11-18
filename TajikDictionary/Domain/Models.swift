@@ -12,6 +12,8 @@ enum SearchMatchType: Sendable {
     case direct
     case stem
     case fuzzy
+    /// The full phrase isn't in the dictionary; results are lookups of its individual words, in query order.
+    case words
 }
 
 struct SearchOutcome: Sendable {

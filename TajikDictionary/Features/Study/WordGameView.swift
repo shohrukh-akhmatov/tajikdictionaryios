@@ -176,6 +176,7 @@ struct WordGameView: View {
                 }
                 .padding(18)
                 .background(.background.secondary, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .dismissesKeyboardOnTap()
 
                 if let feedbackBanner {
                     Text(feedbackBanner.text)
@@ -193,6 +194,7 @@ struct WordGameView: View {
             }
             .padding()
         }
+        .scrollDismissesKeyboard(.immediately)
     }
 
     @ViewBuilder
@@ -643,6 +645,7 @@ struct WordGameView: View {
     }
 
     private func submitTextAnswer(_ input: String, item: GameRoundItem) {
+        KeyboardDismisser.dismiss()
         switch WordGameEngine.checkTypedAnswer(input: input, target: item.card.headword) {
         case .exact:
             nearMissTarget = nil
@@ -657,6 +660,7 @@ struct WordGameView: View {
     }
 
     private func triggerDontKnow() {
+        KeyboardDismisser.dismiss()
         guard !queue.isEmpty else { return }
         totalAttempts += 1
         comboCount = 0

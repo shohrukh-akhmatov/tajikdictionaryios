@@ -11,6 +11,27 @@ actor DictionaryRepository {
         self.db = try SQLiteDatabase(path: url.path)
     }
 
+    /// Correlated subquery yielding a short `", "`-joined translation preview for `entry`.
+    /// Consumes exactly one `?` binding: the partner language code.
+    /// - By default the preview language is the partner for Tajik entries and Tajik for RU/EN entries;
+    ///   `fixedPartner` always uses the bound language.
+    /// - Translations with the same spelling (homograph targets like two "ташаккур" entries)
+    ///   are collapsed so previews never read "ташаккур, раҳмат, ташаккур".
+    static func previewColumn(entry alias: String, limit: Int, fixedPartner: Bool = false) -> String {
+        let langCondition = fixedPartner
+            ? "?"
+            : "CASE WHEN \(alias).lang = 'tg' THEN ? ELSE 'tg' END"
+        return """
+        (SELECT group_concat(h, ', ') FROM (
+            SELECT pe.headword AS h, MIN(pt.position) AS p, MIN(pt.id) AS first_id
+            FROM translations pt JOIN entries pe ON pe.id = pt.to_id
+            WHERE pt.from_id = \(alias).id AND pe.lang = \(langCondition)
+            GROUP BY pe.headword
+            ORDER BY p, first_id
+            LIMIT \(limit)))
+        """
+    }
+
     func search(query rawQuery: String, mode: DictionaryMode, limit: Int = 50) throws -> SearchOutcome {
         let key = TextNormalizer.searchKey(rawQuery)
         if key.isEmpty { return .empty }
@@ -83,7 +104,50 @@ actor DictionaryRepository {
             }
         }
 
+        // Fallback 3: a phrase that isn't an entry ("добрый день", "good morning") → look up each word.
+        let wordResults = try wordByWordSearch(key: key, languages: languages, mode: mode, limit: limit)
+        if !wordResults.isEmpty {
+            return SearchOutcome(
+                query: rawQuery,
+                results: wordResults,
+                searchedLanguages: languages,
+                suggestedMode: nil,
+                matchType: .words
+            )
+        }
+
         return SearchOutcome(query: rawQuery, results: [], searchedLanguages: languages, suggestedMode: nil)
+    }
+
+    /// Looks up each word of a multi-word key separately (exact form or base form first, then prefix),
+    /// keeping query word order so a phrase reads left to right.
+    private func wordByWordSearch(
+        key: String,
+        languages: Set<Language>,
+        mode: DictionaryMode,
+        limit: Int
+    ) throws -> [SearchResult] {
+        let words = key.split(separator: " ").map(String.init)
+        guard words.count > 1 else { return [] }
+
+        var seen: Set<Int64> = []
+        var combined: [SearchResult] = []
+        for word in words.prefix(8) where word.count >= 2 {
+            var hits = try exactMatches(keys: [word], languages: languages, mode: mode, limit: 3)
+            if hits.isEmpty {
+                let stems = WordStemmer.candidateStems(for: word, languages: languages)
+                if !stems.isEmpty {
+                    hits = try exactMatches(keys: stems, languages: languages, mode: mode, limit: 2)
+                }
+            }
+            if hits.isEmpty, word.count >= 3 {
+                hits = try prefixSearch(key: word, languages: languages, mode: mode, limit: 2)
+            }
+            for hit in hits where seen.insert(hit.id).inserted {
+                combined.append(hit)
+            }
+        }
+        return Array(combined.prefix(limit))
     }
 
     private func exactMatches(
@@ -97,12 +161,7 @@ actor DictionaryRepository {
         let keyPlaceholders = keys.map { _ in "?" }.joined(separator: ",")
         let sql = """
         SELECT e.id, e.lang, e.headword, e.pos,
-               (SELECT group_concat(h, ', ') FROM (
-                    SELECT t2.headword AS h
-                    FROM translations t JOIN entries t2 ON t2.id = t.to_id
-                    WHERE t.from_id = e.id
-                      AND t2.lang = CASE WHEN e.lang = 'tg' THEN ? ELSE 'tg' END
-                    ORDER BY t.position LIMIT 4)) AS preview
+               \(Self.previewColumn(entry: "e", limit: 4)) AS preview
         FROM entries e
         WHERE e.lang IN (\(langPlaceholders))
           AND e.search_key IN (\(keyPlaceholders))
@@ -135,12 +194,7 @@ actor DictionaryRepository {
         let placeholders = orderedLangs.map { _ in "?" }.joined(separator: ",")
         let sql = """
         SELECT e.id, e.lang, e.headword, e.pos,
-               (SELECT group_concat(h, ', ') FROM (
-                    SELECT t2.headword AS h
-                    FROM translations t JOIN entries t2 ON t2.id = t.to_id
-                    WHERE t.from_id = e.id
-                      AND t2.lang = CASE WHEN e.lang = 'tg' THEN ? ELSE 'tg' END
-                    ORDER BY t.position LIMIT 4)) AS preview
+               \(Self.previewColumn(entry: "e", limit: 4)) AS preview
         FROM entries e
         WHERE e.lang IN (\(placeholders))
           AND e.search_key >= ?
@@ -180,12 +234,7 @@ actor DictionaryRepository {
         let placeholders = orderedLangs.map { _ in "?" }.joined(separator: ",")
         let sql = """
         SELECT e.id, e.lang, e.headword, e.pos, e.search_key, e.frequency,
-               (SELECT group_concat(h, ', ') FROM (
-                    SELECT t2.headword AS h
-                    FROM translations t JOIN entries t2 ON t2.id = t.to_id
-                    WHERE t.from_id = e.id
-                      AND t2.lang = CASE WHEN e.lang = 'tg' THEN ? ELSE 'tg' END
-                    ORDER BY t.position LIMIT 4)) AS preview
+               \(Self.previewColumn(entry: "e", limit: 4)) AS preview
         FROM entries e
         WHERE e.lang IN (\(placeholders))
           AND length(e.search_key) BETWEEN ? AND ?
@@ -242,11 +291,7 @@ actor DictionaryRepository {
         try db.query(
             """
             SELECT e.id, e.lang, e.headword, e.pos,
-                   (SELECT group_concat(h, ', ') FROM (
-                        SELECT t2.headword AS h
-                        FROM translations t JOIN entries t2 ON t2.id = t.to_id
-                        WHERE t.from_id = e.id AND t2.lang = ?
-                        ORDER BY t.position LIMIT 4)) AS preview
+                   \(Self.previewColumn(entry: "e", limit: 4, fixedPartner: true)) AS preview
             FROM entries e
             WHERE e.lang = 'tg' AND e.topic = ?
             ORDER BY e.frequency DESC, e.headword ASC
@@ -326,11 +371,7 @@ actor DictionaryRepository {
         let homographs: [SearchResult] = entryKey.isEmpty ? [] : try db.query(
             """
             SELECT e2.id, e2.lang, e2.headword, e2.pos,
-                   (SELECT group_concat(h, ', ') FROM (
-                        SELECT t2.headword AS h
-                        FROM translations t JOIN entries t2 ON t2.id = t.to_id
-                        WHERE t.from_id = e2.id AND t2.lang = ?
-                        ORDER BY t.position LIMIT 3)) AS preview
+                   \(Self.previewColumn(entry: "e2", limit: 3, fixedPartner: true)) AS preview
             FROM entries e2
             WHERE e2.lang = ? AND e2.search_key = ? AND e2.id != ?
             ORDER BY e2.frequency DESC, e2.id ASC
@@ -350,11 +391,7 @@ actor DictionaryRepository {
         let synonyms: [SearchResult] = try db.query(
             """
             SELECT e2.id, e2.lang, e2.headword, e2.pos,
-                   (SELECT group_concat(h, ', ') FROM (
-                        SELECT t3.headword AS h
-                        FROM translations t JOIN entries t3 ON t3.id = t.to_id
-                        WHERE t.from_id = e2.id AND t3.lang = ?
-                        ORDER BY t.position LIMIT 2)) AS preview,
+                   \(Self.previewColumn(entry: "e2", limit: 2, fixedPartner: true)) AS preview,
                    COUNT(*) AS shared
             FROM translations t1
             JOIN translations t_rev ON t_rev.from_id = t1.to_id
@@ -383,11 +420,7 @@ actor DictionaryRepository {
             let candidates = try db.query(
                 """
                 SELECT e2.id, e2.lang, e2.headword, e2.pos,
-                       (SELECT group_concat(h, ', ') FROM (
-                            SELECT t2.headword AS h
-                            FROM translations t JOIN entries t2 ON t2.id = t.to_id
-                            WHERE t.from_id = e2.id AND t2.lang = ?
-                            ORDER BY t.position LIMIT 2)) AS preview
+                       \(Self.previewColumn(entry: "e2", limit: 2, fixedPartner: true)) AS preview
                 FROM entries e2
                 WHERE e2.lang = ?
                   AND e2.search_key >= ?
@@ -449,15 +482,8 @@ actor DictionaryRepository {
 
     func preview(id: Int64, mode: DictionaryMode) throws -> String {
         let rows = try db.query(
-            """
-            SELECT group_concat(h, ', ') FROM (
-                SELECT t2.headword AS h FROM translations t
-                JOIN entries e ON e.id = t.from_id
-                JOIN entries t2 ON t2.id = t.to_id
-                WHERE t.from_id = ? AND t2.lang = CASE WHEN e.lang = 'tg' THEN ? ELSE 'tg' END
-                ORDER BY t.position LIMIT 4)
-            """,
-            bindings: [.int64(id), .text(mode.partner.rawValue)]
+            "SELECT \(Self.previewColumn(entry: "e", limit: 4)) FROM entries e WHERE e.id = ?",
+            bindings: [.text(mode.partner.rawValue), .int64(id)]
         ) { $0.stringOrNil(0) ?? "" }
         return rows.first ?? ""
     }
@@ -466,12 +492,7 @@ actor DictionaryRepository {
         try db.query(
             """
             SELECT e.id, e.lang, e.headword, e.pos,
-                   (SELECT group_concat(h, ', ') FROM (
-                        SELECT t2.headword AS h
-                        FROM translations t JOIN entries t2 ON t2.id = t.to_id
-                        WHERE t.from_id = e.id
-                          AND t2.lang = CASE WHEN e.lang = 'tg' THEN ? ELSE 'tg' END
-                        ORDER BY t.position LIMIT 4)) AS preview
+                   \(Self.previewColumn(entry: "e", limit: 4)) AS preview
             FROM entries e
             WHERE e.lang = 'tg'
             ORDER BY e.frequency DESC, e.id ASC
@@ -507,11 +528,7 @@ actor DictionaryRepository {
         let freqClause = maxFrequency < 100 ? "AND e.frequency <= ?" : ""
         let sql = """
         SELECT e.id, e.lang, e.headword, e.pos, e.frequency, e.topic,
-               (SELECT group_concat(h, ', ') FROM (
-                    SELECT t2.headword AS h
-                    FROM translations t JOIN entries t2 ON t2.id = t.to_id
-                    WHERE t.from_id = e.id AND t2.lang = ?
-                    ORDER BY t.position LIMIT 4)) AS preview,
+               \(Self.previewColumn(entry: "e", limit: 4, fixedPartner: true)) AS preview,
                (SELECT ex.tg FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_tg,
                (SELECT \(partnerCol) FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_partner
         FROM entries e
@@ -573,11 +590,7 @@ actor DictionaryRepository {
         for (lo, hi) in ranges {
             let sql = """
             SELECT e.id, e.lang, e.headword, e.pos, e.frequency, e.topic,
-                   (SELECT group_concat(h, ', ') FROM (
-                        SELECT t2.headword AS h
-                        FROM translations t JOIN entries t2 ON t2.id = t.to_id
-                        WHERE t.from_id = e.id AND t2.lang = ?
-                        ORDER BY t.position LIMIT 2)) AS preview
+                   \(Self.previewColumn(entry: "e", limit: 2, fixedPartner: true)) AS preview
             FROM entries e
             WHERE e.lang = 'tg' AND e.frequency BETWEEN ? AND ?
             ORDER BY RANDOM()
@@ -611,12 +624,7 @@ actor DictionaryRepository {
         let placeholders = ids.map { _ in "?" }.joined(separator: ",")
         let sql = """
         SELECT e.id, e.lang, e.headword, e.pos, e.frequency, e.topic,
-               (SELECT group_concat(h, ', ') FROM (
-                    SELECT t2.headword AS h
-                    FROM translations t JOIN entries t2 ON t2.id = t.to_id
-                    WHERE t.from_id = e.id
-                      AND t2.lang = CASE WHEN e.lang = 'tg' THEN ? ELSE 'tg' END
-                    ORDER BY t.position LIMIT 4)) AS preview,
+               \(Self.previewColumn(entry: "e", limit: 4)) AS preview,
                (SELECT ex.tg FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_tg,
                (SELECT \(partnerCol) FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_partner
         FROM entries e

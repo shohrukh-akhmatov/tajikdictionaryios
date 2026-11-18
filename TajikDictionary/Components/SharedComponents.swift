@@ -148,6 +148,24 @@ struct ModeSwitcher: View {
     }
 }
 
+enum KeyboardDismisser {
+    @MainActor
+    static func dismiss() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
+extension View {
+    /// Closes the keyboard when the user taps anywhere inside this view, without blocking
+    /// buttons/links inside it, and when the user starts scrolling it.
+    /// Don't apply it to an ancestor of `TajikLettersBar`: tapping a letter must keep the keyboard open.
+    func dismissesKeyboardOnTap() -> some View {
+        contentShape(Rectangle())
+            .simultaneousGesture(TapGesture().onEnded { KeyboardDismisser.dismiss() })
+            .scrollDismissesKeyboard(.immediately)
+    }
+}
+
 struct TajikLettersBar: View {
     static let letters = ["ғ", "ӣ", "қ", "ӯ", "ҳ", "ҷ"]
     let onTap: (String) -> Void

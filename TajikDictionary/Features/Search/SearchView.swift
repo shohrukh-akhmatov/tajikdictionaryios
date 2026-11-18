@@ -74,6 +74,7 @@ struct SearchView: View {
                 contentView
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(AppTheme.background)
+                    .dismissesKeyboardOnTap()
             }
             .background(AppTheme.background)
             .navigationTitle(String(localized: "Dictionary"))
@@ -136,11 +137,16 @@ struct SearchView: View {
             ScrollView {
                 VStack(spacing: 12) {
                     if outcome.matchType != .direct {
-                        Text(
-                            outcome.matchType == .stem
-                                ? "Showing base forms for “\(trimmed)”"
-                                : String(localized: "Showing closest spelling matches")
-                        )
+                        Group {
+                            switch outcome.matchType {
+                            case .stem:
+                                Text("Showing base forms for “\(trimmed)”")
+                            case .words:
+                                Text(String(localized: "Phrase not found — showing each word separately"))
+                            case .fuzzy, .direct:
+                                Text(String(localized: "Showing closest spelling matches"))
+                            }
+                        }
                         .font(.caption.weight(.medium))
                         .foregroundStyle(AppTheme.onAccentSoft)
                         .frame(maxWidth: .infinity, alignment: .leading)
