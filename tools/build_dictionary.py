@@ -25,6 +25,13 @@ Supplement (data/source/dictionary_supplement.csv, same columns, optional):
     to that entry; any other row becomes a new entry.
   * Entry ids are assigned in reading order and the apps store them (favorites, history, ...),
     so never delete or reorder rows; add new material at the END of the supplement.
+    (Merging the supplement's senses into dictionary.csv rows would create new RU/EN entries
+    earlier in the build and shift every later id, which is why the two files stay separate.)
+
+One database for both apps:
+  * The iOS and Android repos carry identical copies of this script and both CSVs.
+  * A build writes ONE dictionary.sqlite and copies it byte-for-byte into every app checkout
+    it finds (this repo, plus a sibling tajikdictionaryios / tajikdictionaryandroid checkout).
 
 Python 3.9+ (no third-party dependencies).
 """
@@ -35,6 +42,7 @@ import csv
 import json
 import os
 import re
+import shutil
 import sqlite3
 import sys
 import unicodedata
@@ -47,9 +55,19 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_SOURCE = os.path.join(ROOT, "data", "source", "dictionary.csv")
 DEFAULT_SUPPLEMENT = os.path.join(ROOT, "data", "source", "dictionary_supplement.csv")
 # (marker directory that identifies the repo, output path)
+ANDROID_ASSET = os.path.join("app", "src", "main", "assets", "dictionary.sqlite")
+IOS_ASSET = os.path.join("TajikDictionary", "Resources", "dictionary.sqlite")
+_PARENT = os.path.dirname(ROOT)
+# (marker directory that identifies a repo, output path). Both apps ship ONE database: it is
+# built once and copied byte-for-byte to every app checkout found here (this repo and the
+# sibling repo of the other platform), so iOS and Android always carry the same file.
 DEFAULT_OUTPUTS = [
-    ("app", os.path.join(ROOT, "app", "src", "main", "assets", "dictionary.sqlite")),               # Android repo
-    ("TajikDictionary", os.path.join(ROOT, "TajikDictionary", "Resources", "dictionary.sqlite")),   # iOS repo
+    (os.path.join(ROOT, "app"), os.path.join(ROOT, ANDROID_ASSET)),                       # this = Android repo
+    (os.path.join(ROOT, "TajikDictionary"), os.path.join(ROOT, IOS_ASSET)),               # this = iOS repo
+    (os.path.join(_PARENT, "tajikdictionaryandroid", "app"),
+     os.path.join(_PARENT, "tajikdictionaryandroid", ANDROID_ASSET)),                     # sibling Android repo
+    (os.path.join(_PARENT, "tajikdictionaryios", "TajikDictionary"),
+     os.path.join(_PARENT, "tajikdictionaryios", IOS_ASSET)),                             # sibling iOS repo
 ]
 REQUIRED_COLUMNS = {"tg", "pos", "ru", "en", "frequency", "topic", "example_tg", "example_ru", "example_en"}
 VALID_POS = {"n", "v", "adj", "adv", "pron", "num", "prep", "conj", "intj", "part", "phr"}
@@ -395,12 +413,20 @@ def main() -> None:
     if args.out:
         outputs = [args.out]
     else:
-        outputs = [path for marker, path in DEFAULT_OUTPUTS if os.path.isdir(os.path.join(ROOT, marker))]
+        outputs, seen = [], set()
+        for marker, path in DEFAULT_OUTPUTS:
+            path = os.path.abspath(path)
+            if os.path.isdir(marker) and os.path.normcase(path) not in seen:
+                seen.add(os.path.normcase(path))
+                outputs.append(path)
         if not outputs:
             sys.exit("Could not find the app asset directory; pass --out explicitly.")
-    for out in outputs:
-        stats = builder.write(out, args.source)
-        print(f"Wrote {os.path.relpath(out, ROOT)}  {json.dumps(stats, ensure_ascii=False)}")
+    stats = builder.write(outputs[0], args.source)
+    print(f"Wrote {outputs[0]}  {json.dumps(stats, ensure_ascii=False)}")
+    for out in outputs[1:]:                       # identical copy, same data_version
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        shutil.copyfile(outputs[0], out)
+        print(f"Copied to {out}")
 
 
 if __name__ == "__main__":
