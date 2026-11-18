@@ -20,6 +20,12 @@ Source format (CSV, UTF-8, header row):
   * Russian/English entries are generated automatically (deduplicated by headword), and
     every translation is stored in BOTH directions, so TJ->RU and RU->TJ come from one source.
 
+Supplement (data/source/dictionary_supplement.csv, same columns, optional):
+  * Read AFTER dictionary.csv. A row whose (tg, pos) already exists adds its senses (and example)
+    to that entry; any other row becomes a new entry.
+  * Entry ids are assigned in reading order and the apps store them (favorites, history, ...),
+    so never delete or reorder rows; add new material at the END of the supplement.
+
 Python 3.9+ (no third-party dependencies).
 """
 from __future__ import annotations
@@ -39,6 +45,7 @@ from typing import Dict, List, Optional, Tuple
 SCHEMA_VERSION = 1
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_SOURCE = os.path.join(ROOT, "data", "source", "dictionary.csv")
+DEFAULT_SUPPLEMENT = os.path.join(ROOT, "data", "source", "dictionary_supplement.csv")
 # (marker directory that identifies the repo, output path)
 DEFAULT_OUTPUTS = [
     ("app", os.path.join(ROOT, "app", "src", "main", "assets", "dictionary.sqlite")),               # Android repo
@@ -176,6 +183,9 @@ class Builder:
         self._rev_seq = 0
         self._finalized = False
         self._seen_tg_pos = set()
+        self._tg_index: Dict[Tuple[str, str], int] = {}       # (tg lower, pos) -> first tg entry id
+        self._next_position: Dict[Tuple[int, str], int] = {}  # (tg id, lang) -> next TJ->RU/EN position
+        self.merged_rows = 0
         self.warnings: List[str] = []
         self.pos_counts: Counter = Counter()
         self.topic_counts: Counter = Counter()
@@ -234,7 +244,9 @@ class Builder:
                 self.translations.append((target_id, tg_id, position, note))
                 position += 1
 
-    def add_row(self, line: int, row: Dict[str, str]) -> None:
+    def add_row(self, line: int, row: Dict[str, str], merge: bool = False) -> None:
+        """Add one CSV row. With merge=True (supplement file) a row whose (tg, pos) already exists
+        adds its senses/example to that entry instead of creating a new one, so ids never shift."""
         tg = (row.get("tg") or "").strip()
         pos = (row.get("pos") or "").strip() or None
         if not tg:
@@ -242,9 +254,12 @@ class Builder:
         if pos and pos not in VALID_POS:
             raise ValueError(f"line {line}: unknown pos '{pos}' (valid: {sorted(VALID_POS)})")
 
-        if (tg.lower(), pos or "") in self._seen_tg_pos:
-            self.warnings.append(f"line {line}: duplicate (tg={tg!r}, pos={pos!r})")
-        self._seen_tg_pos.add((tg.lower(), pos or ""))
+        key = (tg.lower(), pos or "")
+        existing_id = self._tg_index.get(key) if merge else None
+        if existing_id is None:
+            if key in self._seen_tg_pos:
+                self.warnings.append(f"line {line}: duplicate (tg={tg!r}, pos={pos!r})")
+            self._seen_tg_pos.add(key)
 
         ru, en = parse_list(row.get("ru", "")), parse_list(row.get("en", ""))
         if not ru and not en:
@@ -260,18 +275,32 @@ class Builder:
             raise ValueError(f"line {line}: frequency {freq} out of range 0..100")
 
         topic = (row.get("topic") or "").strip() or None
-        self.pos_counts[pos or "(none)"] += 1
-        self.topic_counts[topic or "(none)"] += 1
-
-        tg_id = self._add_entry("tg", tg, pos, freq, topic)
+        if existing_id is None:
+            self.pos_counts[pos or "(none)"] += 1
+            self.topic_counts[topic or "(none)"] += 1
+            tg_id = self._add_entry("tg", tg, pos, freq, topic)
+            self._tg_index.setdefault(key, tg_id)
+        else:
+            tg_id = existing_id
+            self.merged_rows += 1
+            entry = self.entries[tg_id - 1]
+            entry["frequency"] = max(entry["frequency"], freq)
         for lang, items in (("ru", ru), ("en", en)):
-            for position, raw in enumerate(items):
+            start = self._next_position.get((tg_id, lang), 0)
+            added = 0
+            for rank, raw in enumerate(items):
                 if raw.count("(") != raw.count(")"):
                     self.warnings.append(f"line {line}: unbalanced parentheses in {lang} item {raw!r}")
                 headword, note = split_translation(raw)
                 target_id = self._target(lang, headword, pos, freq, topic)
-                self._link(tg_id, target_id, position, note)      # TJ -> RU/EN
-                self._queue_reverse(target_id, tg_id, position, freq, len(items), note)
+                if existing_id is not None and (tg_id, target_id) in self._links:
+                    continue                                        # sense already on the entry
+                self._link(tg_id, target_id, rank if existing_id is None else start + added, note)  # TJ -> RU/EN
+                # reverse ranking uses the sense order inside this row, so a supplement sense
+                # can still be the primary translation of its English/Russian headword
+                self._queue_reverse(target_id, tg_id, rank, freq, len(items), note)
+                added += 1
+            self._next_position[(tg_id, lang)] = len(items) if existing_id is None else start + added
 
         ex_tg = (row.get("example_tg") or "").strip()
         if ex_tg:
@@ -287,6 +316,7 @@ class Builder:
             "en": sum(1 for e in self.entries if e["lang"] == "en"),
             "translations": len(self.translations),
             "examples": len(self.examples),
+            "supplement_rows_merged": self.merged_rows,
             "topics": dict(self.topic_counts.most_common()),
             "pos": dict(self.pos_counts.most_common()),
             "warnings": len(self.warnings),
@@ -328,6 +358,8 @@ class Builder:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source", default=DEFAULT_SOURCE)
+    parser.add_argument("--supplement", default=DEFAULT_SUPPLEMENT,
+                        help="merge-mode CSV read after --source ('' to skip)")
     parser.add_argument("--out", help="output .sqlite path (default: the app's bundled asset path)")
     parser.add_argument("--check", action="store_true", help="validate CSV and print stats without writing .sqlite")
     parser.add_argument("--self-test", action="store_true", help="run normalization test vectors and exit")
@@ -339,13 +371,20 @@ def main() -> None:
             return
 
     builder = Builder()
-    with open(args.source, encoding="utf-8", newline="") as f:
-        reader = csv.DictReader(f)
-        missing_cols = REQUIRED_COLUMNS - set(reader.fieldnames or [])
-        if missing_cols:
-            sys.exit(f"Missing CSV column(s): {sorted(missing_cols)}")
-        for line, row in enumerate(reader, start=2):
-            builder.add_row(line, row)
+    sources = [(args.source, False)]
+    if args.supplement and os.path.exists(args.supplement):
+        sources.append((args.supplement, True))
+    for path, merge in sources:
+        with open(path, encoding="utf-8", newline="") as f:
+            reader = csv.DictReader(f)
+            missing_cols = REQUIRED_COLUMNS - set(reader.fieldnames or [])
+            if missing_cols:
+                sys.exit(f"{os.path.basename(path)}: missing CSV column(s): {sorted(missing_cols)}")
+            for line, row in enumerate(reader, start=2):
+                try:
+                    builder.add_row(line, row, merge=merge)
+                except ValueError as e:
+                    raise ValueError(f"{os.path.basename(path)}: {e}") from None
 
     if args.check:
         for w in builder.warnings:
