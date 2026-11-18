@@ -162,7 +162,7 @@ struct StudyView: View {
         .onChange(of: selectedTopic) { _, _ in
             Task { await reloadCards() }
         }
-        .onChange(of: settings.mode) { _, _ in
+        .onChange(of: settings.studyMode) { _, _ in
             Task { await reloadCards() }
         }
     }
@@ -184,7 +184,7 @@ struct StudyView: View {
         let progressById = Dictionary(uniqueKeysWithValues: progress.map { ($0.entryId, $0) })
         let raw: [StudyCard]
         if let topic = selectedTopic {
-            let rows = (try? await repository.entries(inTopic: topic, mode: settings.mode)) ?? []
+            let rows = (try? await repository.entries(inTopic: topic, mode: settings.studyMode)) ?? []
             raw = rows.map { StudyCard(entryId: $0.id, language: $0.language, headword: $0.headword, preview: $0.preview) }
         } else {
             raw = favorites.map { StudyCard(entryId: $0.entryId, language: $0.language, headword: $0.headword, preview: $0.preview) }

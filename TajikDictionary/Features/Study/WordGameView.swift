@@ -86,6 +86,9 @@ struct WordGameView: View {
                     }
                     .accessibilityLabel(String(localized: "Close"))
                 }
+                ToolbarItem(placement: .principal) {
+                    StudyLanguageMenu(title: source.title)
+                }
                 if !roundFinished && initialCount > 0 {
                     ToolbarItem(placement: .topBarTrailing) {
                         HStack(spacing: 8) {
@@ -106,6 +109,11 @@ struct WordGameView: View {
         }
         .task {
             await startNewRound()
+        }
+        .onChange(of: settings.studyMode) { _, _ in
+            // Answers are saved as they happen, so restarting loses nothing.
+            speaker.stop()
+            Task { await startNewRound() }
         }
         .onDisappear {
             speaker.stop()
@@ -144,7 +152,7 @@ struct WordGameView: View {
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
-                        if let locale = settings.mode.partner.speechLocaleIdentifier,
+                        if let locale = settings.studyMode.partner.speechLocaleIdentifier,
                            !item.card.preview.isEmpty {
                             Button {
                                 speaker.speak(
@@ -553,7 +561,7 @@ struct WordGameView: View {
         resetCardInputs()
 
         lexiconStats = (try? await repository.lexiconStats()) ?? .fallback
-        let mode = settings.mode
+        let mode = settings.studyMode
         let progressById = Dictionary(uniqueKeysWithValues: progress.map { ($0.entryId, $0.snapshot) })
         let ceilingFreq = settings.hasCompletedPlacement ? settings.placementCeilingFreq : 100
         let pool: [WordCardCandidate]

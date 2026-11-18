@@ -219,7 +219,7 @@ struct PlacementTestView: View {
         answers = []
         selectedChoice = nil
         result = nil
-        let pool = (try? await repository.placementPool(mode: settings.mode)) ?? []
+        let pool = (try? await repository.placementPool(mode: settings.studyMode)) ?? []
         questions = WordGameEngine.buildPlacementQuestions(pool: pool)
         isLoading = false
     }

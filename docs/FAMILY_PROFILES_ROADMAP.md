@@ -64,7 +64,7 @@ saved words, history, game preferences (deck source, typing vs. choice).
 
 ### F0 — Groundwork (both, ~1–2 days)
 - [ ] Put all learning-data access behind one seam: iOS `LearningStore` (owns the `ModelContainer`); Android `LearningDb` provided through `ProfileSession`.
-- [ ] Move per-profile settings (`dailyGoal`, `placement*`) out of the global settings into a per-profile settings object.
+- [ ] Move per-profile settings (`dailyGoal`, `placement*`, `studyMode` — one child learns with Russian, another with English) out of the global settings into a per-profile settings object.
 - [ ] Freeze the **`ProfileBackup v1`** JSON format (§4) in this doc, with a test fixture `docs/fixtures/profile_backup_v1.json` that both apps must import.
 
 ### F1 — Profiles core (MVP, ~3–4 days per platform)
@@ -158,6 +158,7 @@ Entries are matched by `(lang, headword)` first and by `entryId` second, the sam
 | Phrase word-by-word fallback | [x] | [~] |
 | Deduped translation previews | [x] | [~] |
 | Share cards | [x] | [~] |
+| Learning language switch (Tajik ⇄ Russian / English) on Learn card + in-game menu, separate from dictionary mode | [x] | [~] |
 | Profiles F1–F4 | [ ] | [ ] |
 
 ## 6. What else the app needs (prioritized)

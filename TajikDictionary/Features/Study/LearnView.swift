@@ -148,6 +148,8 @@ struct LearnView: View {
                     }
                 }
 
+                StudyLanguagePicker()
+
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         deckChip(title: String(localized: "Smart Mix"), source: .smartMix)

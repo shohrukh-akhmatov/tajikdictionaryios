@@ -56,6 +56,7 @@ final class SettingsStore {
     private let defaults: UserDefaults
     private enum Keys {
         static let mode = "dictionary_mode"
+        static let studyMode = "study_mode"
         static let theme = "appearance_theme"
         static let speechRate = "speech_rate"
         static let fontScale = "font_scale"
@@ -68,6 +69,13 @@ final class SettingsStore {
 
     var mode: DictionaryMode {
         didSet { defaults.set(mode.rawValue, forKey: Keys.mode) }
+    }
+
+    /// Language the learning game pairs with Tajik (Russian or English). Independent of the dictionary mode,
+    /// so switching it on the Learn screen never changes how Search behaves. Progress is shared: it is keyed by
+    /// the Tajik entry, so a word learned with Russian counts as learned with English too.
+    var studyMode: DictionaryMode {
+        didSet { defaults.set(studyMode.rawValue, forKey: Keys.studyMode) }
     }
 
     var theme: ThemeSetting {
@@ -119,6 +127,8 @@ final class SettingsStore {
         let savedGoal = defaults.integer(forKey: Keys.dailyGoal)
         let savedCeiling = defaults.integer(forKey: Keys.placementCeilingFreq)
         self.mode = savedMode
+        // First launch after the update: start from the dictionary mode the user already picked.
+        self.studyMode = defaults.string(forKey: Keys.studyMode).flatMap(DictionaryMode.init(rawValue:)) ?? savedMode
         self.theme = savedTheme
         self.slowSpeech = defaults.bool(forKey: Keys.speechRate)
         self.fontScale = savedScale
