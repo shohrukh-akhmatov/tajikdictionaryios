@@ -39,7 +39,7 @@ struct TopicEntriesView: View {
             }
         }
         .background(AppTheme.background)
-        .navigationTitle(topic.capitalized)
+        .navigationTitle(TopicLocalization.displayName(for: topic))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if !entries.isEmpty {

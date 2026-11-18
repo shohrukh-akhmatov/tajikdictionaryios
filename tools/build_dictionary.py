@@ -172,7 +172,9 @@ class Builder:
         self.examples: List[Tuple[int, str, Optional[str], Optional[str]]] = []
         self._target_index: Dict[Tuple[str, str], int] = {}
         self._links = set()
-        self._out_counts: Dict[int, int] = {}
+        self._reverse_candidates: Dict[int, List[Tuple[int, int, int, int, int, Optional[str]]]] = {}
+        self._rev_seq = 0
+        self._finalized = False
         self._seen_tg_pos = set()
         self.warnings: List[str] = []
         self.pos_counts: Counter = Counter()
@@ -201,7 +203,36 @@ class Builder:
             return
         self._links.add((a, b))
         self.translations.append((a, b, position, note))
-        self._out_counts[a] = self._out_counts.get(a, 0) + 1
+
+    def _queue_reverse(
+        self,
+        target_id: int,
+        tg_id: int,
+        source_pos: int,
+        freq: int,
+        item_count: int,
+        note: Optional[str],
+    ) -> None:
+        penalty = 0 if source_pos == 0 else (8 if source_pos == 1 else source_pos * 14)
+        score = penalty - freq
+        self._rev_seq += 1
+        self._reverse_candidates.setdefault(target_id, []).append(
+            (score, source_pos, -freq, item_count, self._rev_seq, tg_id, note)
+        )
+
+    def finalize(self) -> None:
+        if self._finalized:
+            return
+        self._finalized = True
+        for target_id, candidates in self._reverse_candidates.items():
+            candidates.sort(key=lambda item: item[:5])
+            position = 0
+            for _, _, _, _, _, tg_id, note in candidates:
+                if (target_id, tg_id) in self._links:
+                    continue
+                self._links.add((target_id, tg_id))
+                self.translations.append((target_id, tg_id, position, note))
+                position += 1
 
     def add_row(self, line: int, row: Dict[str, str]) -> None:
         tg = (row.get("tg") or "").strip()
@@ -240,8 +271,7 @@ class Builder:
                 headword, note = split_translation(raw)
                 target_id = self._target(lang, headword, pos, freq, topic)
                 self._link(tg_id, target_id, position, note)      # TJ -> RU/EN
-                reverse_pos = self._out_counts.get(target_id, 0)
-                self._link(target_id, tg_id, reverse_pos, note)   # RU/EN -> TJ
+                self._queue_reverse(target_id, tg_id, position, freq, len(items), note)
 
         ex_tg = (row.get("example_tg") or "").strip()
         if ex_tg:
@@ -250,6 +280,7 @@ class Builder:
                                   (row.get("example_en") or "").strip() or None))
 
     def summary(self) -> Dict[str, object]:
+        self.finalize()
         return {
             "tg": sum(1 for e in self.entries if e["lang"] == "tg"),
             "ru": sum(1 for e in self.entries if e["lang"] == "ru"),
@@ -262,6 +293,7 @@ class Builder:
         }
 
     def write(self, out_path: str, source_path: str) -> Dict[str, int]:
+        self.finalize()
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
         tmp = out_path + ".tmp"
         if os.path.exists(tmp):

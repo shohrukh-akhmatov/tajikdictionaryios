@@ -109,7 +109,7 @@ struct SettingsView: View {
                 }
 
                 Section(String(localized: "About")) {
-                    LabeledContent(String(localized: "App"), value: "Tajik Dictionary 0.3.0")
+                    LabeledContent(String(localized: "App"), value: "\(String(localized: "Tajik Dictionary")) 0.3.0")
                     LabeledContent(String(localized: "Dictionary version"), value: info?.dataVersion ?? "…")
                     if let stats = info?.stats, !stats.isEmpty {
                         VStack(alignment: .leading, spacing: 4) {

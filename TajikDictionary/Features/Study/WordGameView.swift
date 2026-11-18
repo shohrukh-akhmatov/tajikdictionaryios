@@ -14,7 +14,7 @@ enum GameDeckSource: Hashable {
         case .dueReviews: return String(localized: "Due Reviews")
         case .weakWords: return String(localized: "Weak Words")
         case .saved: return String(localized: "Saved")
-        case .topic(let topic): return topic.capitalized
+        case .topic(let topic): return TopicLocalization.displayName(for: topic)
         }
     }
 }

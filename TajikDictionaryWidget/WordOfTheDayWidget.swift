@@ -111,10 +111,19 @@ struct WordOfTheDayProvider: TimelineProvider {
 struct WordOfTheDayWidgetView: View {
     var entry: WordOfTheDayWidgetEntry
 
+    private var widgetHeaderLabel: String {
+        let code = Locale.preferredLanguages.first?.prefix(2).lowercased() ?? "en"
+        switch code {
+        case "ru": return "СЛОВО ДНЯ"
+        case "tg": return "КАЛИМАИ РӮЗ"
+        default: return "WORD OF THE DAY"
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("WORD OF THE DAY")
+                Text(widgetHeaderLabel)
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(.teal)
                 Spacer()

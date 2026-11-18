@@ -154,7 +154,7 @@ struct LearnView: View {
                             deckChip(title: String(localized: "Saved"), source: .saved)
                         }
                         ForEach(topics) { item in
-                            deckChip(title: item.topic.capitalized, source: .topic(item.topic))
+                            deckChip(title: TopicLocalization.displayName(for: item.topic), source: .topic(item.topic))
                         }
                     }
                 }
@@ -256,7 +256,7 @@ struct LearnView: View {
                     color: AppTheme.accent
                 )
                 analyticsTile(
-                    value: WordGameEngine.formatStudyDuration(seconds: summary.totalStudySeconds),
+                    value: StudyDurationFormatter.format(seconds: summary.totalStudySeconds),
                     label: String(localized: "Time studied"),
                     icon: "clock.fill",
                     color: .purple

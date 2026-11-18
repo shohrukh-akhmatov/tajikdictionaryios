@@ -1,21 +1,37 @@
 import SwiftUI
 
 struct GrammarGuideView: View {
-    private let letters: [(String, String, String)] = [
-        ("Ғ ғ", "gh / г", "voiced uvular fricative: ғамгин"),
-        ("Ӣ ӣ", "ī / и", "stressed long i at word ends: бинӣ, зиндагӣ"),
-        ("Қ қ", "q / к", "deep uvular k from back of throat: қалам, вақт"),
-        ("Ӯ ӯ", "ū / у", "rounded mid vowel: хӯрдан, кӯҳ, дӯст"),
-        ("Ҳ ҳ", "h / х", "soft breathy h: ҳафта, шаҳр"),
-        ("Ҷ ҷ", "j / ч", "English j in 'jam': ҷавоб, куҷо"),
-    ]
+    private var letters: [(String, String, String)] {
+        [
+            ("Ғ ғ", "gh / г", String(localized: "voiced uvular fricative: ғамгин")),
+            ("Ӣ ӣ", "ī / и", String(localized: "stressed long i at word ends: бинӣ, зиндагӣ")),
+            ("Қ қ", "q / к", String(localized: "deep uvular k from back of throat: қалам, вақт")),
+            ("Ӯ ӯ", "ū / у", String(localized: "rounded mid vowel: хӯрдан, кӯҳ, дӯст")),
+            ("Ҳ ҳ", "h / х", String(localized: "soft breathy h: ҳафта, шаҳр")),
+            ("Ҷ ҷ", "j / ч", String(localized: "English j in 'jam': ҷавоб, куҷо")),
+        ]
+    }
 
-    private let patterns: [(String, String)] = [
-        ("Plural: -ҳо / -он", "китоб → китобҳо (books), дӯст → дӯстон (friends)"),
-        ("Ezafe: -и", "хонаи калон (big house), китоби ман (my book)"),
-        ("Object marker: -ро", "Дарро пӯшед. (Close the door.)"),
-        ("Present tense: ме- + stem + ending", "рафтан → меравам (I go / am going)"),
-    ]
+    private var patterns: [(String, String)] {
+        [
+            (
+                String(localized: "Plural: -ҳо / -он"),
+                String(localized: "китоб → китобҳо (books), дӯст → дӯстон (friends)")
+            ),
+            (
+                String(localized: "Ezafe: -и"),
+                String(localized: "хонаи калон (big house), китоби ман (my book)")
+            ),
+            (
+                String(localized: "Object marker: -ро"),
+                String(localized: "Дарро пӯшед. (Close the door.)")
+            ),
+            (
+                String(localized: "Present tense: ме- + stem + ending"),
+                String(localized: "рафтан → меравам (I go / am going)")
+            ),
+        ]
+    }
 
     var body: some View {
         List {
@@ -24,6 +40,7 @@ struct GrammarGuideView: View {
                     HStack(spacing: 14) {
                         Text(letter)
                             .font(.title2.bold())
+                            .foregroundStyle(AppTheme.accent)
                             .frame(width: 56, alignment: .leading)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(fold).font(.headline)
@@ -43,6 +60,8 @@ struct GrammarGuideView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(AppTheme.background)
         .navigationTitle(String(localized: "Tajik Alphabet & Grammar"))
         .navigationBarTitleDisplayMode(.inline)
     }

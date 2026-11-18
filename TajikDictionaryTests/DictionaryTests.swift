@@ -325,5 +325,13 @@ final class DictionaryTests: XCTestCase {
 
         let ruTranslations = detail.translations[.russian] ?? []
         XCTAssertTrue(Set(ruTranslations.map(\.position)).count >= 2)
+
+        let blindOutcome = try await repo.search(query: "blind", mode: .tjEn)
+        let blindHit = try XCTUnwrap(blindOutcome.results.first { $0.headword == "blind" })
+        XCTAssertTrue(blindHit.preview.hasPrefix("кӯр"))
+
+        let withOutcome = try await repo.search(query: "with", mode: .tjEn)
+        let withHit = try XCTUnwrap(withOutcome.results.first { $0.headword == "with" })
+        XCTAssertTrue(withHit.preview.hasPrefix("бо"))
     }
 }

@@ -195,7 +195,7 @@ struct SearchView: View {
                                 ForEach(topics) { item in
                                     NavigationLink(value: item) {
                                         HStack(spacing: 8) {
-                                            Text(item.topic.capitalized)
+                                            Text(TopicLocalization.displayName(for: item.topic))
                                                 .font(.subheadline.weight(.medium))
                                                 .foregroundStyle(AppTheme.textPrimary)
                                             Text("\(item.count)")

@@ -41,7 +41,7 @@ struct StudyView: View {
                         selectedTopic = nil
                     }
                     ForEach(topics) { item in
-                        deckPill(title: item.topic, active: selectedTopic == item.topic) {
+                        deckPill(title: TopicLocalization.displayName(for: item.topic), active: selectedTopic == item.topic) {
                             selectedTopic = item.topic
                         }
                     }
@@ -153,7 +153,7 @@ struct StudyView: View {
         }
         .padding(.bottom, 16)
         .background(AppTheme.background)
-        .navigationTitle(selectedTopic.map { "Study: \($0)" } ?? String(localized: "Flashcards"))
+        .navigationTitle(selectedTopic.map { String(localized: "Study: \(TopicLocalization.displayName(for: $0))") } ?? String(localized: "Flashcards"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
             topics = (try? await repository.topics()) ?? []

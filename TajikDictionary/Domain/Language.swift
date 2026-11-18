@@ -85,17 +85,17 @@ enum PartOfSpeech: String, CaseIterable, Sendable {
 
     var label: String {
         switch self {
-        case .noun: return "noun"
-        case .verb: return "verb"
-        case .adjective: return "adj."
-        case .adverb: return "adv."
-        case .pronoun: return "pron."
-        case .numeral: return "num."
-        case .preposition: return "prep."
-        case .conjunction: return "conj."
-        case .interjection: return "interj."
-        case .particle: return "part."
-        case .phrase: return "phrase"
+        case .noun: return String(localized: "noun")
+        case .verb: return String(localized: "verb")
+        case .adjective: return String(localized: "adj.")
+        case .adverb: return String(localized: "adv.")
+        case .pronoun: return String(localized: "pron.")
+        case .numeral: return String(localized: "num.")
+        case .preposition: return String(localized: "prep.")
+        case .conjunction: return String(localized: "conj.")
+        case .interjection: return String(localized: "interj.")
+        case .particle: return String(localized: "part.")
+        case .phrase: return String(localized: "phrase")
         }
     }
 }

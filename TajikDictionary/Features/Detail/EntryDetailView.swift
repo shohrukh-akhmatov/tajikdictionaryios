@@ -101,7 +101,7 @@ struct EntryDetailView: View {
                                 NavigationLink {
                                     TopicEntriesView(topic: topic)
                                 } label: {
-                                    Text(topic.capitalized)
+                                    Text(TopicLocalization.displayName(for: topic))
                                         .font(.caption2.weight(.semibold))
                                         .foregroundStyle(AppTheme.onAccentSoft)
                                         .padding(.horizontal, 8)

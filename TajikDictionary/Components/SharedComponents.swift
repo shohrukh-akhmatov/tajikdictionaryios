@@ -291,3 +291,51 @@ final class SpeechSpeaker {
         synthesizer.stopSpeaking(at: .immediate)
     }
 }
+
+enum TopicLocalization {
+    static func displayName(for topic: String) -> String {
+        switch topic.lowercased() {
+        case "adjectives": return String(localized: "Adjectives")
+        case "verbs": return String(localized: "Verbs")
+        case "nature": return String(localized: "Nature")
+        case "education": return String(localized: "Education")
+        case "time": return String(localized: "Time")
+        case "animals": return String(localized: "Animals")
+        case "food": return String(localized: "Food")
+        case "body": return String(localized: "Body")
+        case "family": return String(localized: "Family")
+        case "home": return String(localized: "Home")
+        case "travel": return String(localized: "Travel")
+        case "grammar": return String(localized: "Grammar")
+        case "colors": return String(localized: "Colors")
+        case "numbers": return String(localized: "Numbers")
+        case "pronouns": return String(localized: "Pronouns")
+        case "greetings": return String(localized: "Greetings")
+        case "language": return String(localized: "Language")
+        case "basics": return String(localized: "Basics")
+        case "abstract": return String(localized: "Abstract")
+        case "questions": return String(localized: "Questions")
+        case "places": return String(localized: "Places")
+        case "people": return String(localized: "People")
+        case "health": return String(localized: "Health")
+        case "work": return String(localized: "Work")
+        case "feelings": return String(localized: "Feelings")
+        default: return topic.capitalized
+        }
+    }
+}
+
+enum StudyDurationFormatter {
+    static func format(seconds: Int) -> String {
+        if seconds < 60 {
+            return String(localized: "\(max(0, seconds)) s")
+        }
+        let minutes = seconds / 60
+        if minutes < 60 {
+            return String(localized: "\(minutes) min")
+        }
+        let hours = minutes / 60
+        let remMin = minutes % 60
+        return String(localized: "\(hours) h \(remMin) m")
+    }
+}
