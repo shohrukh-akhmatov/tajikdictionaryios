@@ -33,7 +33,8 @@
 - [x] Share cards for round results, placement level, streaks and achievements (iOS; Android in progress) with app link + QR
 - [ ] Local multi-learner profiles on one device (one learning store per profile, no server), "Who's learning?" switcher
 - [ ] Kid mode + optional parent PIN, local family board, cross-platform profile backup file
-- [ ] Daily reminder (local notifications), onboarding, CI for both repos, GitHub Pages landing + privacy policy
+- [x] First-launch onboarding; simpler Learn screen with a separate Progress screen
+- [ ] Daily reminder (local notifications), CI for both repos, GitHub Pages landing + privacy policy
 
 ## Phase 4 — Store Release & OTA Lexicon Updates
 - [ ] Over-the-air lightweight SQLite delta/manifest update check (keeping user data untouched in Room / SwiftData)

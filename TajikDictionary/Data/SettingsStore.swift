@@ -65,6 +65,14 @@ final class SettingsStore {
         static let placementCeilingFreq = "placement_ceiling_freq"
         static let placementBaselineWords = "placement_baseline_words"
         static let hasCompletedPlacement = "has_completed_placement"
+        static let hasCompletedOnboarding = "has_completed_onboarding"
+        /// Any of these present means the app was used before onboarding existed.
+        static let legacyUsageMarkers = [mode, theme, speechRate, fontScale, dailyGoal, hasCompletedPlacement]
+    }
+
+    /// First-launch welcome flow (language, daily goal, level) has been finished or skipped.
+    var hasCompletedOnboarding: Bool {
+        didSet { defaults.set(hasCompletedOnboarding, forKey: Keys.hasCompletedOnboarding) }
     }
 
     var mode: DictionaryMode {
@@ -137,6 +145,9 @@ final class SettingsStore {
         self.placementCeilingFreq = savedCeiling > 0 ? savedCeiling : 100
         self.placementBaselineWords = defaults.integer(forKey: Keys.placementBaselineWords)
         self.hasCompletedPlacement = defaults.bool(forKey: Keys.hasCompletedPlacement)
+        // Existing users who already changed a setting never see onboarding; RootView also checks for saved data.
+        self.hasCompletedOnboarding = defaults.object(forKey: Keys.hasCompletedOnboarding) as? Bool
+            ?? Keys.legacyUsageMarkers.contains { defaults.object(forKey: $0) != nil }
     }
 
     func applyPlacement(_ result: PlacementResult) {

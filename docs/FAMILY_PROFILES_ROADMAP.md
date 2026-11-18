@@ -154,11 +154,13 @@ Entries are matched by `(lang, headword)` first and by `entryId` second, the sam
 
 | Feature | iOS | Android |
 |---|---|---|
-| Keyboard closes on tap/scroll | [x] | [~] |
-| Phrase word-by-word fallback | [x] | [~] |
-| Deduped translation previews | [x] | [~] |
-| Share cards | [x] | [~] |
-| Learning language switch (Tajik ⇄ Russian / English) on Learn card + in-game menu, separate from dictionary mode | [x] | [~] |
+| Keyboard closes on tap/scroll | [x] | [x] |
+| Phrase word-by-word fallback | [x] | [x] |
+| Deduped translation previews | [x] | [x] |
+| Share cards | [x] | [x] |
+| Learning language switch (Tajik ⇄ Russian / English) on Learn card + in-game menu, separate from dictionary mode | [x] | [x] |
+| First-launch onboarding (welcome → language → daily goal → level test / beginner); skipped for existing users | [x] | [~] |
+| Learn screen: today's goal + trainer first; stats, vocabulary and badges on a separate Progress screen | [x] | [~] |
 | Profiles F1–F4 | [ ] | [ ] |
 
 ## 6. What else the app needs (prioritized)
@@ -179,7 +181,7 @@ Entries are matched by `(lang, headword)` first and by `entryId` second, the sam
 ### 6.3 Retention
 * **Daily reminder** (local notifications, no server): "Keep your 5-day streak 🔥". It can be set per profile, and the time is chosen during onboarding. This is not implemented on iOS today.
 * **Streak freeze**: 1 free missed day per week, earned with XP. It avoids discouraging kids.
-* A short **onboarding** (3 screens): choose the mode TJ⇄RU / TJ⇄EN → take the placement test or "I'm a beginner" → choose the reminder time.
+* ~~A short **onboarding**~~ shipped (4 steps: welcome → TJ⇄RU / TJ⇄EN → daily goal → placement test or "I'm a beginner"). Add the reminder-time step when the daily reminder lands.
 
 ### 6.4 Learning features
 * An alphabet and reading game for children and beginners (Cyrillic letters + `ғ ӣ қ ӯ ҳ ҷ`, with sounds).

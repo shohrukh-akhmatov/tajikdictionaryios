@@ -28,6 +28,10 @@ struct RootView: View {
     @Environment(SettingsStore.self) private var settings
     @State private var selectedTab: AppTab = .dictionary
     @State private var deepLinkEntryId: Int64?
+    @Environment(\.modelContext) private var modelContext
+    @State private var showOnboarding = false
+    @State private var placementAfterOnboarding = false
+    @State private var showPlacementTest = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -62,6 +66,24 @@ struct RootView: View {
                 .tag(AppTab.settings)
         }
         .preferredColorScheme(settings.theme.colorScheme)
+        .task { checkOnboarding() }
+        .fullScreenCover(isPresented: $showOnboarding, onDismiss: {
+            // Present the test only after the onboarding cover is gone; two covers can't animate at once.
+            if placementAfterOnboarding {
+                placementAfterOnboarding = false
+                selectedTab = .learn
+                showPlacementTest = true
+            }
+        }) {
+            OnboardingView { startPlacement in
+                settings.hasCompletedOnboarding = true
+                placementAfterOnboarding = startPlacement
+                showOnboarding = false
+            }
+        }
+        .fullScreenCover(isPresented: $showPlacementTest) {
+            PlacementTestView()
+        }
         .task {
             if let top = try? await repository.spotlightEntries(mode: settings.mode, limit: 250) {
                 await SpotlightIndexer.indexEntries(top)
@@ -78,6 +100,20 @@ struct RootView: View {
                 selectedTab = .dictionary
                 deepLinkEntryId = id
             }
+        }
+    }
+
+    /// Shows onboarding on a true first launch. Users who already have saved words, history or study
+    /// progress (from before onboarding existed) are marked done silently.
+    private func checkOnboarding() {
+        guard !settings.hasCompletedOnboarding else { return }
+        let hasData = ((try? modelContext.fetchCount(FetchDescriptor<HistoryItem>())) ?? 0) > 0
+            || ((try? modelContext.fetchCount(FetchDescriptor<FavoriteItem>())) ?? 0) > 0
+            || ((try? modelContext.fetchCount(FetchDescriptor<FlashcardProgress>())) ?? 0) > 0
+        if hasData {
+            settings.hasCompletedOnboarding = true
+        } else {
+            showOnboarding = true
         }
     }
 }

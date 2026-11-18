@@ -27,6 +27,11 @@ struct StudyView: View {
     @State private var flipped = false
     @State private var reviewedCount = 0
     @State private var cardPresentedAt: Date = .now
+    @State private var dragOffset: CGFloat = 0
+    @State private var isFlyingOut = false
+
+    /// Horizontal distance after which releasing the card counts as a swipe.
+    private let swipeThreshold: CGFloat = 110
 
     init(initialTopic: String? = nil) {
         self.initialTopic = initialTopic
@@ -112,10 +117,38 @@ struct StudyView: View {
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .stroke(AppTheme.border.opacity(0.7), lineWidth: 1)
                 )
+                .overlay(alignment: .top) { swipeHint }
                 .padding(.horizontal)
+                .offset(x: dragOffset)
+                .rotationEffect(.degrees(Double(dragOffset) / 25), anchor: .bottom)
+                .id(card.id)
                 .onTapGesture {
+                    guard !isFlyingOut else { return }
                     flipped.toggle()
                 }
+                // Works on every card, the last one included: swiping it opens "Session complete".
+                .gesture(
+                    DragGesture(minimumDistance: 15)
+                        .onChanged { value in
+                            guard !isFlyingOut else { return }
+                            dragOffset = value.translation.width
+                        }
+                        .onEnded { value in
+                            guard !isFlyingOut else { return }
+                            let width = value.predictedEndTranslation.width
+                            if abs(width) > swipeThreshold {
+                                swipe(card, right: width > 0)
+                            } else {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { dragOffset = 0 }
+                            }
+                        }
+                )
+                .accessibilityAction(named: Text(String(localized: "Good"))) { grade(card, .good) }
+                .accessibilityAction(named: Text(String(localized: "Again"))) { grade(card, .again) }
+
+                Text(String(localized: "Swipe right if you know it, left to repeat"))
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.textSecondary)
 
                 Spacer()
 
@@ -164,6 +197,42 @@ struct StudyView: View {
         }
         .onChange(of: settings.studyMode) { _, _ in
             Task { await reloadCards() }
+        }
+    }
+
+    /// "Good" / "Again" stamp that fades in while the card is dragged.
+    @ViewBuilder
+    private var swipeHint: some View {
+        let strength = min(1, abs(dragOffset) / swipeThreshold)
+        if dragOffset != 0 {
+            let right = dragOffset > 0
+            Text(right ? String(localized: "Good") : String(localized: "Again"))
+                .font(.headline.weight(.heavy))
+                .textCase(.uppercase)
+                .foregroundStyle(right ? AppTheme.accent : Color.red)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(right ? AppTheme.accent : Color.red, lineWidth: 3)
+                )
+                .rotationEffect(.degrees(right ? -12 : 12))
+                .frame(maxWidth: .infinity, alignment: right ? .leading : .trailing)
+                .padding(24)
+                .opacity(strength)
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// Flies the card off screen, then grades it. The next card (or the completion screen) appears unmoved.
+    private func swipe(_ card: StudyCard, right: Bool) {
+        isFlyingOut = true
+        withAnimation(.easeIn(duration: 0.2)) { dragOffset = right ? 700 : -700 }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(200))
+            grade(card, right ? .good : .again)
+            dragOffset = 0
+            isFlyingOut = false
         }
     }
 

@@ -3732,6 +3732,604 @@
         }
       }
     },
+    "Back": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назад"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бозгашт"
+          }
+        }
+      }
+    },
+    "Skip": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пропустить"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Гузаштан"
+          }
+        }
+      }
+    },
+    "Welcome to Tajik Dictionary": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to Tajik Dictionary"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добро пожаловать в Таджикский словарь"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хуш омадед ба Луғати тоҷикӣ"
+          }
+        }
+      }
+    },
+    "Search 16,000+ words, even offline": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search 16,000+ words, even offline"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поиск по 16 000+ словам, даже без интернета"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҷустуҷӯи зиёда аз 16 000 калима, ҳатто бе интернет"
+          }
+        }
+      }
+    },
+    "Learn words with a short daily game": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn words with a short daily game"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Учите слова в короткой ежедневной игре"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаҳоро бо бозии кӯтоҳи ҳаррӯза омӯзед"
+          }
+        }
+      }
+    },
+    "Save words and track your progress": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save words and track your progress"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохраняйте слова и следите за прогрессом"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаҳоро нигоҳ доред ва пешрафти худро пайгирӣ кунед"
+          }
+        }
+      }
+    },
+    "Get started": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get started"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Начать"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оғоз кардан"
+          }
+        }
+      }
+    },
+    "Which language do you know?": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which language do you know?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Какой язык вы знаете?"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шумо кадом забонро медонед?"
+          }
+        }
+      }
+    },
+    "Translations and the learning game will use it. You can change it anytime.": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translations and the learning game will use it. You can change it anytime."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Он будет использоваться для переводов и игры. Его можно изменить в любой момент."
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Он барои тарҷумаҳо ва бозии омӯзишӣ истифода мешавад. Онро ҳар вақт иваз кардан мумкин аст."
+          }
+        }
+      }
+    },
+    "Set a daily goal": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set a daily goal"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите цель на день"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҳадафи рӯзонаро интихоб кунед"
+          }
+        }
+      }
+    },
+    "A few words every day works better than many once a week.": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A few words every day works better than many once a week."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Несколько слов каждый день лучше, чем много раз в неделю."
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҳар рӯз чанд калима беҳтар аз бисёр калима як бор дар ҳафта аст."
+          }
+        }
+      }
+    },
+    "Casual": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Casual"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Легко"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Осон"
+          }
+        }
+      }
+    },
+    "Regular": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regular"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обычно"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Муқаррарӣ"
+          }
+        }
+      }
+    },
+    "Serious": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serious"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Серьёзно"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ҷиддӣ"
+          }
+        }
+      }
+    },
+    "Intense": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intense"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Интенсивно"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пуршиддат"
+          }
+        }
+      }
+    },
+    "%lld words a day": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld words a day"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld слов в день"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld калима дар як рӯз"
+          }
+        }
+      }
+    },
+    "Do you already know some Tajik?": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do you already know some Tajik?"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вы уже немного знаете таджикский?"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шумо аллакай каме тоҷикӣ медонед?"
+          }
+        }
+      }
+    },
+    "A 1-minute test lets the game skip words you already know.": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A 1-minute test lets the game skip words you already know."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Минутный тест поможет игре пропускать слова, которые вы уже знаете."
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Санҷиши 1-дақиқаӣ ба бозӣ имкон медиҳад, ки калимаҳои шиносро гузарад."
+          }
+        }
+      }
+    },
+    "Check my level": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check my level"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проверить уровень"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Санҷидани сатҳ"
+          }
+        }
+      }
+    },
+    "1-minute test": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1-minute test"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тест на 1 минуту"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Санҷиши 1-дақиқаӣ"
+          }
+        }
+      }
+    },
+    "I'm a beginner": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm a beginner"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Я начинающий"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ман навомӯз ҳастам"
+          }
+        }
+      }
+    },
+    "Start with the most common words": {
+      "comment": "First-launch onboarding.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start with the most common words"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Начать с самых частых слов"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Аз калимаҳои серистифода оғоз кунед"
+          }
+        }
+      }
+    },
+    "The game will skip words you already know.": {
+      "comment": "Learn screen placement prompt.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The game will skip words you already know."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Игра будет пропускать слова, которые вы уже знаете."
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бозӣ калимаҳои шиносро мегузарад."
+          }
+        }
+      }
+    },
+    "Progress & achievements": {
+      "comment": "Learn screen link to the Progress screen.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progress & achievements"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прогресс и достижения"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пешрафт ва дастовардҳо"
+          }
+        }
+      }
+    },
+    "Progress": {
+      "comment": "Progress screen title.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Progress"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прогресс"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пешрафт"
+          }
+        }
+      }
+    },
+    "Swipe right if you know it, left to repeat": {
+      "comment": "Flashcards: swipe hint under the card.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe right if you know it, left to repeat"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп вправо — знаю, влево — повторить"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ба рост кашед — медонам, ба чап — такрор"
+          }
+        }
+      }
+    },
     "Showing closest spelling matches": {
       "comment": "A description of how words that don't match exactly are displayed in the search results.",
       "isCommentAutoGenerated": true,
