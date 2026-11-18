@@ -3456,6 +3456,259 @@
         }
       }
     },
+    "%lld-day streak!": {
+      "comment": "Share card headline for the current study streak.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld-day streak!"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Серия: %lld дн. подряд!"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld рӯз пайдарпай!"
+          }
+        }
+      }
+    },
+    "Achievement unlocked": {
+      "comment": "Share card headline for an unlocked badge.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Achievement unlocked"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новое достижение"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дастоварди нав"
+          }
+        }
+      }
+    },
+    "Best streak": {
+      "comment": "Share card stat label: longest streak in days.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Best streak"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лучшая серия"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Беҳтарин пайдарпайӣ"
+          }
+        }
+      }
+    },
+    "Learn Tajik for free, even offline": {
+      "comment": "Share card / share text call to action next to the app link.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Learn Tajik for free, even offline"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Учите таджикский бесплатно, даже офлайн"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Забони тоҷикиро ройгон омӯзед, ҳатто бе интернет"
+          }
+        }
+      }
+    },
+    "Level": {
+      "comment": "Share card stat label for the CEFR level (A1, B2…).",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Level"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Уровень"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сатҳ"
+          }
+        }
+      }
+    },
+    "Level %lld · %@": {
+      "comment": "Share card subtitle: XP level number and its title.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Level %lld · %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Уровень %lld · %@"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сатҳи %lld · %@"
+          }
+        }
+      }
+    },
+    "My Tajik level: %@": {
+      "comment": "Share card headline after the placement test; %@ is a CEFR level.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Tajik level: %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мой уровень таджикского: %@"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сатҳи забони тоҷикии ман: %@"
+          }
+        }
+      }
+    },
+    "My Tajik progress": {
+      "comment": "Share card headline when there is no active streak.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Tajik progress"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мой прогресс в таджикском"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пешрафти ман дар забони тоҷикӣ"
+          }
+        }
+      }
+    },
+    "New words": {
+      "comment": "Share card stat label: new words started in the round.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New words"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новые слова"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Калимаҳои нав"
+          }
+        }
+      }
+    },
+    "Score": {
+      "comment": "Share card stat label: correct answers out of total in the placement test.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Score"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Результат"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Натиҷа"
+          }
+        }
+      }
+    },
+    "Share result": {
+      "comment": "Button that opens the share card for a result.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share result"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поделиться результатом"
+          }
+        },
+        "tg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Мубодилаи натиҷа"
+          }
+        }
+      }
+    },
     "Showing closest spelling matches": {
       "comment": "A description of how words that don't match exactly are displayed in the search results.",
       "isCommentAutoGenerated": true,

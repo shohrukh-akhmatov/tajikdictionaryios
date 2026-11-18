@@ -483,6 +483,19 @@ struct WordGameView: View {
             Spacer()
 
             VStack(spacing: 10) {
+                ShareCardButton(
+                    content: .round(
+                        xp: sessionXp,
+                        accuracy: accuracy,
+                        newWords: newlyLearnedInRound,
+                        streakDays: summary.currentStreakDays,
+                        cefr: summary.cefrLevel.rawValue
+                    ),
+                    prominent: true
+                )
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+
                 Button {
                     Task { await startNewRound() }
                 } label: {

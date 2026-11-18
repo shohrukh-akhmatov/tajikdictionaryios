@@ -29,6 +29,12 @@
 - [x] **System Quick Lookup** polish (Android `ACTION_PROCESS_TEXT` live intent handling; iOS `CoreSpotlight` indexing / deep links)
 - [ ] Offline Camera OCR Lookup (ML Kit on Android / VisionKit on iOS)
 
+## Phase 3.5 — Family Profiles & Sharing (see [`FAMILY_PROFILES_ROADMAP.md`](FAMILY_PROFILES_ROADMAP.md))
+- [x] Share cards for round results, placement level, streaks and achievements (iOS; Android in progress) with app link + QR
+- [ ] Local multi-learner profiles on one device (one learning store per profile, no server), "Who's learning?" switcher
+- [ ] Kid mode + optional parent PIN, local family board, cross-platform profile backup file
+- [ ] Daily reminder (local notifications), onboarding, CI for both repos, GitHub Pages landing + privacy policy
+
 ## Phase 4 — Store Release & OTA Lexicon Updates
 - [ ] Over-the-air lightweight SQLite delta/manifest update check (keeping user data untouched in Room / SwiftData)
 - [ ] Community word submission & correction pipeline

@@ -82,6 +82,13 @@ struct LearnView: View {
                                             .lineLimit(2)
                                     }
                                     Spacer(minLength: 0)
+                                    if badge.unlocked {
+                                        ShareCardButton(content: .badge(badge, summary: summary), title: String(localized: "Share"))
+                                            .labelStyle(.iconOnly)
+                                            .buttonStyle(.borderless)
+                                            .font(.caption)
+                                            .tint(AppTheme.accent)
+                                    }
                                 }
                                 .padding(12)
                             }
@@ -402,6 +409,11 @@ struct LearnView: View {
                     }
                 }
                 Spacer()
+                ShareCardButton(content: .progress(summary), title: String(localized: "Share"))
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.borderless)
+                    .tint(AppTheme.accent)
+                    .padding(.trailing, 4)
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("Lv. \(summary.level) · \(summary.levelTitle)")
                         .font(.subheadline.weight(.bold))

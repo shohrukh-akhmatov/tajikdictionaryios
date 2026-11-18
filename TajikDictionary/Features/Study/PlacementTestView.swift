@@ -181,6 +181,10 @@ struct PlacementTestView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
 
+                ShareCardButton(content: .placement(res), prominent: true)
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+
                 Button {
                     Task { await loadQuestions() }
                 } label: {
