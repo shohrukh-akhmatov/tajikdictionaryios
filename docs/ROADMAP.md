@@ -36,6 +36,14 @@
 - [x] First-launch onboarding; simpler Learn screen with a separate Progress screen
 - [ ] Daily reminder (local notifications), CI for both repos, GitHub Pages landing + privacy policy
 
+## Phase 3.6 — Monetization (ads + GDPR consent)
+- [x] Google UMP consent (GDPR/TCF) on launch, after onboarding; "Privacy settings" row in Settings where required
+- [x] Waterfall on every slot: Yandex Mobile Ads 8.7.0 first, Google Mobile Ads (iOS 13.13 / Android next-gen SDK 1.3.1) when Yandex has no fill
+- [x] Placements (same on both apps): pinned bottom banner on Dictionary / Learn / Saved / History (not Settings); separate banner unit on the word detail screen; interstitial at most every 3 finished game rounds and 3 min, only when leaving the game. No ads inside game rounds, flashcards, onboarding or the placement test
+- [x] Debug builds use Yandex demo + Google test units; release builds keep ads off until every ID is filled in (iOS `AdConfig.swift`, Android `Config/AdUnits.properties`)
+- [ ] Before release: real AdMob app IDs (iOS Info.plist `GADApplicationIdentifier`, Android manifest) + published GDPR message in AdMob, real Yandex and AdMob ad units, store privacy labels / Data safety form updated for advertising data
+- [ ] Kid mode must turn ads off (or switch to child-directed, non-personalized ads): COPPA, Google Play Families policy, App Store Kids category rules
+
 ## Phase 4 — Store Release & OTA Lexicon Updates
 - [ ] Over-the-air lightweight SQLite delta/manifest update check (keeping user data untouched in Room / SwiftData)
 - [ ] Community word submission & correction pipeline

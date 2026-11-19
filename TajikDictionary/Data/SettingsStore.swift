@@ -136,7 +136,7 @@ final class SettingsStore {
         let savedCeiling = defaults.integer(forKey: Keys.placementCeilingFreq)
         self.mode = savedMode
         // First launch after the update: start from the dictionary mode the user already picked.
-        self.studyMode = defaults.string(forKey: Keys.studyMode).flatMap(DictionaryMode.init(rawValue:)) ?? savedMode
+        self.studyMode = defaults.string(forKey: Keys.studyMode).flatMap(DictionaryMode.init(rawValue:)) ?? .tjEn
         self.theme = savedTheme
         self.slowSpeech = defaults.bool(forKey: Keys.speechRate)
         self.fontScale = savedScale

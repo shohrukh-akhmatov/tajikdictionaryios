@@ -171,6 +171,8 @@ struct SearchView: View {
                                 }
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
+                                .frame(maxWidth: .infinity)
+                                .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
 
@@ -252,6 +254,8 @@ struct SearchView: View {
                                     }
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 8)
+                                    .frame(maxWidth: .infinity)
+                                    .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
 

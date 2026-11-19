@@ -223,6 +223,7 @@ struct WordRowView: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 4)
+        .contentShape(Rectangle())
     }
 }
 

@@ -120,7 +120,7 @@ That costs about 1 read and 1 write per session per profile, which stays within 
 * **Link:** one constant. iOS `AppLinks.shareURL`, Android `AppLinks.SHARE_URL`. It is currently a placeholder
   `https://shohrukh-akhmatov.github.io/tajikdictionary/`; replace it when the GitHub Pages site is live (see §6.2).
 * Rendering happens only when the user taps Share (preview sheet → system share sheet), never in lists.
-* Privacy: cards never contain the profile name **unless** the user turns on "Show name on share cards" (per profile, off by default for child profiles). There is no analytics and no tracking parameter in the link.
+* Privacy: cards never contain the profile name **unless** the user turns on "Show name on share cards" (per profile, off by default for child profiles). There is no analytics and no tracking parameter in the link. Kid mode must also switch ads off (see ROADMAP Phase 3.6).
 
 **Next for share cards**
 - [ ] Android parity (same layout, `FileProvider` + `ACTION_SEND`)
@@ -174,7 +174,7 @@ Entries are matched by `(lang, headword)` first and by `entryId` second, the sam
 * Images for kid topics (F2): about 300 simple illustrations or emoji-based cards.
 
 ### 6.2 Release blockers
-* **GitHub Pages landing page.** It is needed for the share-card link anyway, and it should hold store badges, screenshots and a **privacy policy** (required by both stores; "no data collected" is easy to state truthfully).
+* **GitHub Pages landing page.** It is needed for the share-card link anyway, and it should hold store badges, screenshots and a **privacy policy** (required by both stores; "no data collected" is no longer true since ads were added: the policy must cover Yandex Mobile Ads and Google UMP consent, i.e. device identifiers, IP-derived location, ad interactions and the TCF consent string).
 * Store assets: icons, screenshots in 3 languages, descriptions. Age rating; Families/Kids-category questionnaires once profiles ship.
 * **CI on GitHub Actions:** a `macos` runner for `xcodebuild test` (iOS can't be built on the current Windows dev machine) and `ubuntu` for `./gradlew test assembleDebug`. Both apps currently ship without automated builds.
 

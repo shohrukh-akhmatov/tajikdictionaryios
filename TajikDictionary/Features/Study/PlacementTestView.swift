@@ -39,6 +39,8 @@ struct PlacementTestView: View {
                 }
             }
         }
+        // No ad while it runs as part of first-launch onboarding: ads only start once it is closed.
+        .stickyBannerAd()
         .task {
             await loadQuestions()
         }

@@ -38,6 +38,9 @@ struct EntryDetailView: View {
                     .background(AppTheme.background)
             }
         }
+        // The tab's pinned banner switches to the word-detail ad unit while this screen is shown.
+        .onAppear { AdsManager.shared.entryScreensVisible += 1 }
+        .onDisappear { AdsManager.shared.entryScreensVisible -= 1 }
         .navigationTitle(detail?.entry.headword ?? "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

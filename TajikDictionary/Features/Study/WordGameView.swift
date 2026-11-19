@@ -107,6 +107,7 @@ struct WordGameView: View {
                 }
             }
         }
+        .stickyBannerAd()
         .task {
             await startNewRound()
         }
@@ -514,7 +515,8 @@ struct WordGameView: View {
                 .controlSize(.large)
 
                 Button {
-                    dismiss()
+                    // At most one interstitial per 3 finished rounds and 3 minutes, only when leaving the game.
+                    AdsManager.shared.showInterstitialIfDue { dismiss() }
                 } label: {
                     Text(String(localized: "Done"))
                         .frame(maxWidth: .infinity)
@@ -888,6 +890,7 @@ struct WordGameView: View {
             ))
         }
         try? modelContext.save()
+        AdsManager.shared.recordFinishedRound()
     }
 
     private func resetCardInputs() {

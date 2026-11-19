@@ -122,6 +122,13 @@ struct SettingsView: View {
                     Link(destination: URL(string: "mailto:support@tajikdictionary.tj?subject=Tajik%20Dictionary%20Feedback")!) {
                         Label(String(localized: "Report a mistake / Suggest a word"), systemImage: "envelope")
                     }
+                    if AdsManager.shared.isPrivacyOptionsRequired {
+                        Button {
+                            Task { await AdsManager.shared.presentPrivacyOptions() }
+                        } label: {
+                            Label(String(localized: "Privacy settings"), systemImage: "hand.raised")
+                        }
+                    }
                 }
             }
             .navigationTitle(String(localized: "Settings"))

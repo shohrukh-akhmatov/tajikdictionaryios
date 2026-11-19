@@ -36,24 +36,28 @@ struct RootView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             SearchView(deepLinkEntryId: $deepLinkEntryId)
+                .stickyBannerAd()
                 .tabItem {
                     Label(String(localized: "Dictionary"), systemImage: "character.book.closed")
                 }
                 .tag(AppTab.dictionary)
 
             LearnView()
+                .stickyBannerAd()
                 .tabItem {
                     Label(String(localized: "Learn"), systemImage: "graduationcap")
                 }
                 .tag(AppTab.learn)
 
             FavoritesView()
+                .stickyBannerAd()
                 .tabItem {
                     Label(String(localized: "Saved"), systemImage: "star")
                 }
                 .tag(AppTab.saved)
 
             HistoryView()
+                .stickyBannerAd()
                 .tabItem {
                     Label(String(localized: "History"), systemImage: "clock")
                 }
@@ -66,13 +70,19 @@ struct RootView: View {
                 .tag(AppTab.settings)
         }
         .preferredColorScheme(settings.theme.colorScheme)
-        .task { checkOnboarding() }
+        .task {
+            checkOnboarding()
+            // On first launch the consent form waits until onboarding (and the optional test) is done.
+            if !showOnboarding { await AdsManager.shared.start() }
+        }
         .fullScreenCover(isPresented: $showOnboarding, onDismiss: {
             // Present the test only after the onboarding cover is gone; two covers can't animate at once.
             if placementAfterOnboarding {
                 placementAfterOnboarding = false
                 selectedTab = .learn
                 showPlacementTest = true
+            } else {
+                Task { await AdsManager.shared.start() }
             }
         }) {
             OnboardingView { startPlacement in
@@ -81,7 +91,9 @@ struct RootView: View {
                 showOnboarding = false
             }
         }
-        .fullScreenCover(isPresented: $showPlacementTest) {
+        .fullScreenCover(isPresented: $showPlacementTest, onDismiss: {
+            Task { await AdsManager.shared.start() }
+        }) {
             PlacementTestView()
         }
         .task {

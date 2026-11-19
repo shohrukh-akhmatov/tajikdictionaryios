@@ -7,17 +7,31 @@ struct StudyLanguagePicker: View {
 
     var body: some View {
         @Bindable var settings = settings
-        HStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(verbatim: "\(Language.tajik.displayName) ⇄")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(AppTheme.textSecondary)
-                .fixedSize()
-            Picker(String(localized: "Learning language"), selection: $settings.studyMode) {
-                ForEach(DictionaryMode.allCases) { mode in
-                    Text(mode.partner.displayName).tag(mode)
+            HStack(spacing: 10) {
+                // English first so it is the leading/default choice.
+                ForEach([DictionaryMode.tjEn, .tjRu]) { mode in
+                    let selected = settings.studyMode == mode
+                    Button {
+                        settings.studyMode = mode
+                    } label: {
+                        Text(mode.partner.displayName)
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, minHeight: 52)
+                            .foregroundStyle(selected ? Color.white : AppTheme.textPrimary)
+                            .background(
+                                selected ? AppTheme.accent : AppTheme.cardSubtle,
+                                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            )
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(selected ? .isSelected : [])
                 }
             }
-            .pickerStyle(.segmented)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(String(localized: "Learning language"))
