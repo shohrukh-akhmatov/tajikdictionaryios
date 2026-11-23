@@ -69,11 +69,11 @@ struct LexiconStats: Sendable {
     let tierOtherCount: Int
 
     static let fallback = LexiconStats(
-        totalTajik: 16_358,
-        tier90Count: 290,
-        tier80Count: 1_474,
-        tier70Count: 4_536,
-        tierOtherCount: 10_058
+        totalTajik: 18_447,
+        tier90Count: 307,
+        tier80Count: 1_534,
+        tier70Count: 4_555,
+        tierOtherCount: 12_051
     )
 }
 
@@ -182,6 +182,10 @@ struct GameRoundItem: Identifiable, Hashable, Sendable {
     var requiredCorrectInRound: Int = 1
     var correctInRound: Int = 0
     var hadMistakeInRound: Bool = false
+    var targetAnswer: String = ""
+    var buildTarget: String = ""
+    var acceptedAnswers: [String] = []
+    var clozeTranslation: String? = nil
 }
 
 enum AnswerCheckResult: Equatable, Sendable {
@@ -430,6 +434,57 @@ enum WordGameEngine {
         return Array(weakPool.prefix(roundSize))
     }
 
+    private static let fallbackEnDistractors = ["water", "house", "book", "time", "school", "friend"]
+    private static let fallbackRuDistractors = ["вода", "дом", "книга", "время", "школа", "друг"]
+    private static let glossSeparators = CharacterSet(charactersIn: ",;/")
+
+    private static func stripParentheticalNotes(_ text: String) -> String {
+        text.replacingOccurrences(of: "\\([^)]*\\)", with: "", options: .regularExpression)
+    }
+
+    /// Extracts the primary (#1 sense-ordered) target-language word from `preview`.
+    static func primaryTargetWord(_ preview: String) -> String {
+        let cleaned = stripParentheticalNotes(preview)
+        for part in cleaned.components(separatedBy: glossSeparators) {
+            let t = part.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !t.isEmpty { return t }
+        }
+        return ""
+    }
+
+    /// Strips leading English infinitive `"to "` for tile building and typing hints.
+    static func stripInfinitivePrefix(_ word: String) -> String {
+        let trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count > 3 && trimmed.lowercased().hasPrefix("to ") {
+            return String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return trimmed
+    }
+
+    /// Clean target word used for Word Builder tiles and typing hints.
+    static func buildTargetWord(_ preview: String) -> String {
+        stripInfinitivePrefix(primaryTargetWord(preview))
+    }
+
+    /// All valid synonymous target translations from `preview` (including bare verbs without `"to "`).
+    static func acceptedTargetAnswers(_ preview: String) -> [String] {
+        let cleaned = stripParentheticalNotes(preview)
+        var out: [String] = []
+        var seen = Set<String>()
+        for part in cleaned.components(separatedBy: glossSeparators) {
+            let t = part.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !t.isEmpty else { continue }
+            if seen.insert(t.lowercased()).inserted {
+                out.append(t)
+            }
+            let bare = stripInfinitivePrefix(t)
+            if !bare.isEmpty && seen.insert(bare.lowercased()).inserted {
+                out.append(bare)
+            }
+        }
+        return out
+    }
+
     static func challengeKind(for masteryStage: Int, headword: String) -> ChallengeKind {
         let letterCount = headword.trimmingCharacters(in: .whitespacesAndNewlines).count
         switch masteryStage {
@@ -453,17 +508,38 @@ enum WordGameEngine {
         selected.map { card in
             let existing = progressById[card.entryId]
             let stage = existing?.masteryStage ?? 0
-            let kind = challengeKind(for: stage, headword: card.headword)
+            let primary = primaryTargetWord(card.preview)
+            let targetAnswer = primary.isEmpty ? card.headword : primary
+            let cleanBuild = buildTargetWord(card.preview)
+            let buildTarget = cleanBuild.isEmpty ? targetAnswer : cleanBuild
+            let accepted = acceptedTargetAnswers(card.preview)
+            let acceptedAnswers = accepted.isEmpty ? [targetAnswer] : accepted
+
+            let kind = challengeKind(for: stage, headword: buildTarget)
             let choices = makeChoices(for: card, pool: allPool, fallbackDistractors: fallbackDistractors)
-            let tiles = makeTiles(for: card.headword)
-            let cloze = makeClozeSentence(exampleTg: card.exampleTg, targetHeadword: card.headword)
+            let tiles = makeTiles(for: buildTarget)
+            let partnerCloze = makeClozeSentence(exampleTg: card.examplePartner, targetHeadword: buildTarget)
+                ?? makeClozeSentence(exampleTg: card.examplePartner, targetHeadword: targetAnswer)
+            let tgCloze = makeClozeSentence(exampleTg: card.exampleTg, targetHeadword: card.headword)
+            let cloze = partnerCloze ?? tgCloze
+            let clozeTranslation: String?
+            if partnerCloze != nil, let exTg = card.exampleTg?.trimmingCharacters(in: .whitespacesAndNewlines), !exTg.isEmpty {
+                clozeTranslation = exTg
+            } else {
+                clozeTranslation = nil
+            }
+
             return GameRoundItem(
                 card: card,
                 challengeKind: kind,
                 choices: choices,
                 tiles: tiles,
                 clozeSentence: cloze,
-                isNewWord: existing?.lastReviewedAt == nil
+                isNewWord: existing?.lastReviewedAt == nil,
+                targetAnswer: targetAnswer,
+                buildTarget: buildTarget,
+                acceptedAnswers: acceptedAnswers,
+                clozeTranslation: clozeTranslation
             )
         }
     }
@@ -473,16 +549,28 @@ enum WordGameEngine {
         pool: [WordCardCandidate],
         fallbackDistractors: [String]
     ) -> [String] {
-        var seenNormalized = Set<String>([card.headword.lowercased()])
+        let primary = primaryTargetWord(card.preview)
+        let correctChoice = primary.isEmpty ? card.headword : primary
+        let targetIsLatin = TajikTransliterator.looksLatin(correctChoice)
+        var seenNormalized = Set<String>([correctChoice.lowercased()])
+        for syn in acceptedTargetAnswers(card.preview) {
+            seenNormalized.insert(syn.lowercased())
+        }
         var distractors: [String] = []
+
+        func matchesScript(_ candidate: String) -> Bool {
+            !targetIsLatin || TajikTransliterator.looksLatin(candidate)
+        }
 
         let samePos = pool
             .filter { $0.entryId != card.entryId && $0.pos == card.pos }
             .sorted { abs($0.frequency - card.frequency) < abs($1.frequency - card.frequency) }
         for item in samePos {
-            let key = item.headword.lowercased()
-            if seenNormalized.insert(key).inserted {
-                distractors.append(item.headword)
+            let choicePrimary = primaryTargetWord(item.preview)
+            let choice = choicePrimary.isEmpty ? item.headword : choicePrimary
+            let key = choice.lowercased()
+            if !choice.isEmpty && matchesScript(choice) && seenNormalized.insert(key).inserted {
+                distractors.append(choice)
                 if distractors.count == 3 { break }
             }
         }
@@ -492,9 +580,11 @@ enum WordGameEngine {
                 .filter { $0.entryId != card.entryId }
                 .shuffled()
             for item in anyPool {
-                let key = item.headword.lowercased()
-                if seenNormalized.insert(key).inserted {
-                    distractors.append(item.headword)
+                let choicePrimary = primaryTargetWord(item.preview)
+                let choice = choicePrimary.isEmpty ? item.headword : choicePrimary
+                let key = choice.lowercased()
+                if !choice.isEmpty && matchesScript(choice) && seenNormalized.insert(key).inserted {
+                    distractors.append(choice)
                     if distractors.count == 3 { break }
                 }
             }
@@ -502,6 +592,19 @@ enum WordGameEngine {
 
         if distractors.count < 3 {
             for word in fallbackDistractors.shuffled() {
+                let cleanPrimary = primaryTargetWord(word)
+                let clean = cleanPrimary.isEmpty ? word.trimmingCharacters(in: .whitespacesAndNewlines) : cleanPrimary
+                let key = clean.lowercased()
+                if !clean.isEmpty && matchesScript(clean) && seenNormalized.insert(key).inserted {
+                    distractors.append(clean)
+                    if distractors.count == 3 { break }
+                }
+            }
+        }
+
+        if distractors.count < 3 {
+            let builtIn = targetIsLatin ? fallbackEnDistractors : fallbackRuDistractors
+            for word in builtIn {
                 let key = word.lowercased()
                 if seenNormalized.insert(key).inserted {
                     distractors.append(word)
@@ -510,7 +613,7 @@ enum WordGameEngine {
             }
         }
 
-        return ([card.headword] + distractors).shuffled()
+        return ([correctChoice] + distractors).shuffled()
     }
 
     static func makeTiles(for headword: String) -> [String] {
@@ -550,21 +653,76 @@ enum WordGameEngine {
         return example.replacingCharacters(in: swiftRange, with: "____")
     }
 
-    static func checkTypedAnswer(input: String, target: String) -> AnswerCheckResult {
+    static func checkTypedAnswer(
+        input: String,
+        target: String,
+        acceptedAnswers: [String] = []
+    ) -> AnswerCheckResult {
         let trimmedInput = input.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedTarget = target.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedInput.isEmpty else { return .wrong }
 
-        if trimmedInput.lowercased() == trimmedTarget.lowercased() {
+        var candidates: [String] = []
+        var seen = Set<String>()
+        func addCandidate(_ raw: String) {
+            let t = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !t.isEmpty else { return }
+            if seen.insert(t.lowercased()).inserted {
+                candidates.append(t)
+            }
+            let bare = stripInfinitivePrefix(t)
+            if !bare.isEmpty && seen.insert(bare.lowercased()).inserted {
+                candidates.append(bare)
+            }
+        }
+        addCandidate(trimmedTarget)
+        for syn in acceptedAnswers {
+            addCandidate(syn)
+        }
+
+        if candidates.contains(where: { $0.caseInsensitiveCompare(trimmedInput) == .orderedSame }) {
             return .exact
         }
 
         let normInput = TextNormalizer.searchKey(trimmedInput)
-        let normTarget = TextNormalizer.searchKey(trimmedTarget)
-        if !normInput.isEmpty && normInput == normTarget {
-            return .tajikLetterNearMiss(target: trimmedTarget)
+        for cand in candidates {
+            let normTarget = TextNormalizer.searchKey(cand)
+            if !normInput.isEmpty && normInput == normTarget {
+                return .tajikLetterNearMiss(target: cand)
+            }
+            if !TajikTransliterator.looksLatin(cand) && TajikTransliterator.looksLatin(trimmedInput) {
+                let translitKey = TextNormalizer.searchKey(TajikTransliterator.fromLatin(trimmedInput))
+                if !translitKey.isEmpty && translitKey == normTarget {
+                    return .tajikLetterNearMiss(target: cand)
+                }
+            }
+            if normTarget.count >= 5 && withinOneEdit(normInput, normTarget) {
+                return .tajikLetterNearMiss(target: cand)
+            }
         }
         return .wrong
+    }
+
+    static func withinOneEdit(_ a: String, _ b: String) -> Bool {
+        let ac = Array(a)
+        let bc = Array(b)
+        if abs(ac.count - bc.count) > 1 { return false }
+        let (s, l) = ac.count <= bc.count ? (ac, bc) : (bc, ac)
+        var i = 0
+        var j = 0
+        var edits = 0
+        while i < s.count && j < l.count {
+            if s[i] == l[j] {
+                i += 1
+                j += 1
+                continue
+            }
+            edits += 1
+            if edits > 1 { return false }
+            if s.count == l.count { i += 1 }
+            j += 1
+        }
+        return edits + (l.count - j) + (s.count - i) <= 1
     }
 
     static func evaluateAnswer(

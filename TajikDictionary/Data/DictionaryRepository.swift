@@ -516,6 +516,136 @@ actor DictionaryRepository {
         return DictionaryInfo(dataVersion: dict["data_version"] ?? "", stats: dict["stats"] ?? "")
     }
 
+    /// Resolves the current entry ID for `(lang, headword)` after a `dictionary.sqlite` update.
+    func resolveEntryId(lang: String, headword: String) throws -> Int64? {
+        let trimmed = headword.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        if let direct = try queryIdByHeadwordOrKey(lang: lang, headword: trimmed) {
+            return direct
+        }
+
+        if lang == Language.tajik.rawValue, Self.containsSovietTajikChars(trimmed) {
+            let modernized = Self.modernizeSovietTajik(trimmed)
+            if !modernized.isEmpty, modernized.caseInsensitiveCompare(trimmed) != .orderedSame {
+                if let fallback = try queryIdByHeadwordOrKey(lang: lang, headword: modernized) {
+                    return fallback
+                }
+            }
+        }
+        return nil
+    }
+
+    private func queryIdByHeadwordOrKey(lang: String, headword: String) throws -> Int64? {
+        let exact = try db.query(
+            "SELECT id FROM entries WHERE lang = ? AND LOWER(headword) = LOWER(?) ORDER BY frequency DESC, id ASC LIMIT 1",
+            bindings: [.text(lang), .text(headword)]
+        ) { $0.int64(0) }
+        if let first = exact.first { return first }
+
+        let key = TextNormalizer.searchKey(headword)
+        guard !key.isEmpty else { return nil }
+        let byKey = try db.query(
+            "SELECT id FROM entries WHERE lang = ? AND search_key = ? ORDER BY frequency DESC, id ASC LIMIT 1",
+            bindings: [.text(lang), .text(key)]
+        ) { $0.int64(0) }
+        return byKey.first
+    }
+
+    private static let sovietTajikChars = CharacterSet(charactersIn: "цщыьЦЩЫЬ")
+    private static let tajikVowels = Set<Character>("аоуэиіїеёюяӯ")
+    private static let explicitModernTajik: [String: String] = [
+        "лыжа": "лижа",
+        "лыжатозӣ": "лижатозӣ",
+        "циркуль": "паргор",
+        "цирк": "сирк",
+        "цикл": "сикл",
+        "цистерна": "систерна",
+        "цитата": "иқтибос",
+        "цемент": "семент",
+        "цементӣ": "сементӣ",
+        "цех": "сех",
+        "центр": "марказ",
+        "концерт": "консерт",
+        "концертӣ": "консертӣ",
+        "концерн": "консерн",
+        "канцелярия": "канселярия",
+        "канцеляриявӣ": "канселяриявӣ",
+        "канцелярӣ": "канселярӣ",
+        "рецензия": "тақриз",
+        "офицер": "афсар",
+        "принцип": "принсип",
+        "медицина": "тиб",
+        "медицинӣ": "тиббӣ",
+        "дисциплина": "интизом",
+        "лицей": "литсей",
+        "социалист": "сотсиалист",
+        "социалистӣ": "сотсиалистӣ",
+        "социалӣ": "сотсиалӣ",
+        "нацист": "натсист",
+        "нацистӣ": "натсистӣ",
+        "публицист": "публитсист",
+        "публицистӣ": "публитсистӣ",
+        "процент": "фоиз",
+        "доцент": "дотсент",
+        "акцент": "аксент",
+        "абзац": "абзатс",
+        "лоцман": "лотсман",
+        "швейцариягӣ": "швейтсариягӣ",
+        "швейцарӣ": "швейтсарӣ",
+        "французӣ": "фаронсавӣ",
+        "интернационал": "интернатсионал",
+        "интернационалӣ": "интернатсионалӣ",
+        "энциклопедия": "энсиклопедия",
+        "энциклопедӣ": "энсиклопедӣ",
+        "ассоциация": "ассотсиатсия",
+        "концентрация": "консентратсия",
+        "концентрационӣ": "консентратсионӣ",
+        "концентрат": "консентрат",
+        "милиционер": "милитсионер",
+        "революционер": "револютсионер",
+        "пьеса": "песа",
+        "эскадрилья": "эскадриля",
+        "батальон": "баталон",
+        "интервью": "интервю",
+        "судья": "судя",
+        "фильм": "филм",
+        "кинофильм": "кинофилм",
+        "роль": "рол",
+        "руль": "рул",
+        "гриль": "грил",
+        "пальто": "палто",
+        "тюрьма": "маҳбас",
+        "мадьюнӣ": "мадюнӣ",
+    ]
+
+    static func containsSovietTajikChars(_ text: String) -> Bool {
+        text.rangeOfCharacter(from: sovietTajikChars) != nil
+    }
+
+    static func modernizeSovietTajik(_ raw: String) -> String {
+        let w0 = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let explicit = explicitModernTajik[w0.lowercased()] {
+            return explicit
+        }
+        var w = w0.replacingOccurrences(
+            of: "([ғқҳҷзбдтсшрлнмвфкпг])ь([ие])",
+            with: "$1й$2",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        w = w.replacingOccurrences(of: "ь", with: "").replacingOccurrences(of: "Ь", with: "")
+        for v in tajikVowels {
+            w = w.replacingOccurrences(of: "\(v)ция", with: "\(v)тсия", options: .caseInsensitive)
+            w = w.replacingOccurrences(of: "\(v)цион", with: "\(v)тсион", options: .caseInsensitive)
+        }
+        w = w.replacingOccurrences(of: "ция", with: "сия", options: .caseInsensitive)
+        w = w.replacingOccurrences(of: "цион", with: "сион", options: .caseInsensitive)
+        w = w.replacingOccurrences(of: "ц", with: "тс").replacingOccurrences(of: "Ц", with: "Тс")
+        w = w.replacingOccurrences(of: "щ", with: "ш").replacingOccurrences(of: "Щ", with: "Ш")
+        w = w.replacingOccurrences(of: "ы", with: "и").replacingOccurrences(of: "Ы", with: "И")
+        return w
+    }
+
     /// Returns frequency-ordered Tajik candidates (plus optional cloze example) for the word-teaching game.
     func learningCandidates(
         topic: String? = nil,
@@ -532,7 +662,7 @@ actor DictionaryRepository {
                (SELECT ex.tg FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_tg,
                (SELECT \(partnerCol) FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_partner
         FROM entries e
-        WHERE e.lang = 'tg' \(topicClause) \(freqClause)
+        WHERE e.lang = 'tg' AND e.frequency >= 40 \(topicClause) \(freqClause)
         ORDER BY e.frequency DESC, e.id ASC
         LIMIT ?
         """
@@ -617,24 +747,34 @@ actor DictionaryRepository {
         return combined
     }
 
-    /// Fetches candidates for specific entry IDs (e.g. Favorites deck) in partner mode.
+    /// Fetches candidates for specific entry IDs (e.g. Favorites deck) in partner mode,
+    /// normalizing any non-Tajik entry IDs to their primary Tajik entry.
     func learningCandidates(forEntryIds ids: [Int64], mode: DictionaryMode) throws -> [WordCardCandidate] {
         guard !ids.isEmpty else { return [] }
         let partnerCol = mode.partner == .russian ? "ex.ru" : "ex.en"
         let placeholders = ids.map { _ in "?" }.joined(separator: ",")
         let sql = """
-        SELECT e.id, e.lang, e.headword, e.pos, e.frequency, e.topic,
-               \(Self.previewColumn(entry: "e", limit: 4)) AS preview,
+        SELECT req.id, e.lang, e.headword, e.pos, e.frequency, e.topic,
+               \(Self.previewColumn(entry: "e", limit: 4, fixedPartner: true)) AS preview,
                (SELECT ex.tg FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_tg,
                (SELECT \(partnerCol) FROM examples ex WHERE ex.entry_id = e.id LIMIT 1) AS ex_partner
-        FROM entries e
-        WHERE e.id IN (\(placeholders))
-        ORDER BY e.frequency DESC, e.id ASC
+        FROM entries req
+        JOIN entries e ON e.id = CASE
+            WHEN req.lang = 'tg' THEN req.id
+            ELSE (
+                SELECT t.to_id FROM translations t
+                JOIN entries pe ON pe.id = t.to_id
+                WHERE t.from_id = req.id AND pe.lang = 'tg'
+                ORDER BY t.position ASC LIMIT 1
+            )
+        END
+        WHERE req.id IN (\(placeholders))
+        ORDER BY e.frequency DESC, req.id ASC
         """
         var bindings: [SQLiteValue] = [.text(mode.partner.rawValue)]
         ids.forEach { bindings.append(.int64($0)) }
 
-        return try db.query(sql, bindings: bindings) { row in
+        let rows = try db.query(sql, bindings: bindings) { row in
             WordCardCandidate(
                 entryId: row.int64(0),
                 language: Language(rawValue: row.string(1)) ?? .tajik,
@@ -647,6 +787,7 @@ actor DictionaryRepository {
                 examplePartner: row.stringOrNil(8)
             )
         }
+        return rows.filter { !$0.preview.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 
     func topTajikHeadwords(limit: Int = 50) throws -> [String] {

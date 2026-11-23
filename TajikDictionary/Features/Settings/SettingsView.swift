@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var isImporting = false
     @State private var backupMessage: String?
     @State private var showPlacementTest = false
+    @State private var showProfileSwitcher = false
 
     var body: some View {
         @Bindable var settings = settings
@@ -45,6 +46,35 @@ struct SettingsView: View {
                 }
 
                 Section(String(localized: "Learning")) {
+                    Button {
+                        showProfileSwitcher = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            ProfileAvatarCircle(
+                                avatar: settings.activeProfile.avatar,
+                                colorHex: settings.activeProfile.colorHex,
+                                size: 34,
+                                fontSize: 17
+                            )
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(settings.activeProfile.localizedDisplayName)
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(AppTheme.textPrimary)
+                                Text(String(localized: "\(settings.profiles.count) / \(LearnerProfile.maxProfiles) profiles"))
+                                    .font(.caption)
+                                    .foregroundStyle(AppTheme.textSecondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if settings.profiles.count >= 2 {
+                        Toggle(String(localized: "Ask “Who's learning?” on Learn tab"), isOn: $settings.askWhoIsLearning)
+                    }
+
                     Picker(String(localized: "Daily word goal"), selection: $settings.dailyGoal) {
                         ForEach([5, 10, 15, 20], id: \.self) { goal in
                             Text("\(goal)").tag(goal)
@@ -74,31 +104,31 @@ struct SettingsView: View {
                 }
 
                 Section(String(localized: "Backup & Transfer")) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "icloud.and.arrow.up")
+                            .foregroundStyle(AppTheme.accent)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(String(localized: "iCloud Auto Backup"))
+                                .font(.subheadline.weight(.semibold))
+                            Text(String(localized: "Up to \(LearnerProfile.maxProfiles) local profiles are backed up automatically & can be exported to iCloud Drive"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
                     Button {
-                        let placement = settings.hasCompletedPlacement
-                            ? FavoritesBackup.PlacementRecord(
-                                cefrLevel: settings.placementLevelRaw,
-                                ceilingFreq: settings.placementCeilingFreq,
-                                baselineWords: settings.placementBaselineWords
-                            )
-                            : nil
-                        if let data = try? FavoritesBackup.encodeFull(
-                            favorites: favorites,
-                            flashcards: flashcards,
-                            dailyLogs: dailyLogs,
-                            placement: placement
-                        ) {
+                        if let data = try? settings.exportAllProfilesData() {
                             exportDocument = FavoritesBackupDocument(data: data)
                             isExporting = true
                         }
                     } label: {
-                        Label(String(localized: "Export learning & saved words (JSON)"), systemImage: "square.and.arrow.up")
+                        Label(String(localized: "Export all profiles (iCloud Drive / JSON)"), systemImage: "square.and.arrow.up")
                     }
 
                     Button {
                         isImporting = true
                     } label: {
-                        Label(String(localized: "Import backup (JSON)"), systemImage: "square.and.arrow.down")
+                        Label(String(localized: "Restore profiles from backup (JSON)"), systemImage: "square.and.arrow.down")
                     }
 
                     if let backupMessage {
@@ -140,15 +170,18 @@ struct SettingsView: View {
             .fullScreenCover(isPresented: $showPlacementTest) {
                 PlacementTestView()
             }
+            .sheet(isPresented: $showProfileSwitcher) {
+                ProfileSwitcherSheet()
+            }
             .fileExporter(
                 isPresented: $isExporting,
                 document: exportDocument,
                 contentType: .json,
-                defaultFilename: "tajik-dictionary-favorites"
+                defaultFilename: "tajik-dictionary-profiles"
             ) { result in
                 switch result {
                 case .success:
-                    backupMessage = String(localized: "Exported \(favorites.count) saved words")
+                    backupMessage = String(localized: "Exported \(favorites.count + flashcards.count) saved words")
                 case .failure:
                     backupMessage = String(localized: "Could not save backup file")
                 }
@@ -165,93 +198,8 @@ struct SettingsView: View {
                     defer { if scoped { url.stopAccessingSecurityScopedResource() } }
                     do {
                         let data = try Data(contentsOf: url)
-                        let full = try FavoritesBackup.decodeFull(from: data)
-                        for record in full.favorites {
-                            let targetId = record.entryId
-                            let existing = (try? modelContext.fetch(
-                                FetchDescriptor<FavoriteItem>(predicate: #Predicate { $0.entryId == targetId })
-                            ))?.first
-                            if let existing {
-                                existing.lang = record.lang
-                                existing.headword = record.headword
-                                existing.preview = record.preview
-                            } else {
-                                modelContext.insert(FavoriteItem(
-                                    entryId: record.entryId,
-                                    lang: record.lang,
-                                    headword: record.headword,
-                                    preview: record.preview,
-                                    addedAt: Date(timeIntervalSince1970: Double(record.addedAt) / 1000.0)
-                                ))
-                            }
-                        }
-                        for card in full.flashcards {
-                            let targetId = card.entryId
-                            let existing = (try? modelContext.fetch(
-                                FetchDescriptor<FlashcardProgress>(predicate: #Predicate { $0.entryId == targetId })
-                            ))?.first
-                            let nextDate = Date(timeIntervalSince1970: Double(card.nextReviewAt) / 1000.0)
-                            let lastDate = card.lastReviewedAt.map { Date(timeIntervalSince1970: Double($0) / 1000.0) }
-                            if let existing {
-                                existing.repetitions = card.repetitions
-                                existing.intervalDays = card.intervalDays
-                                existing.easeFactor = card.easeFactor
-                                existing.nextReviewAt = nextDate
-                                existing.masteryStage = card.masteryStage
-                                existing.stabilityDays = card.stabilityDays
-                                existing.lapses = card.lapses
-                                existing.lastReviewedAt = lastDate
-                                existing.isKnownSkipped = card.isKnownSkipped
-                            } else {
-                                modelContext.insert(FlashcardProgress(
-                                    entryId: card.entryId,
-                                    lang: card.lang,
-                                    headword: card.headword,
-                                    preview: card.preview,
-                                    repetitions: card.repetitions,
-                                    intervalDays: card.intervalDays,
-                                    easeFactor: card.easeFactor,
-                                    nextReviewAt: nextDate,
-                                    masteryStage: card.masteryStage,
-                                    stabilityDays: card.stabilityDays,
-                                    lapses: card.lapses,
-                                    lastReviewedAt: lastDate,
-                                    isKnownSkipped: card.isKnownSkipped
-                                ))
-                            }
-                        }
-                        for log in full.dailyLogs {
-                            let key = log.dateKey
-                            let existing = (try? modelContext.fetch(
-                                FetchDescriptor<DailyStudyLog>(predicate: #Predicate { $0.dateKey == key })
-                            ))?.first
-                            if let existing {
-                                existing.wordsReviewed = max(existing.wordsReviewed, log.wordsReviewed)
-                                existing.wordsLearned = max(existing.wordsLearned, log.wordsLearned)
-                                existing.xpEarned = max(existing.xpEarned, log.xpEarned)
-                                existing.roundsCompleted = max(existing.roundsCompleted, log.roundsCompleted)
-                                existing.studySeconds = max(existing.studySeconds, log.studySeconds)
-                                existing.correctReviews = max(existing.correctReviews, log.correctReviews)
-                            } else {
-                                modelContext.insert(DailyStudyLog(
-                                    dateKey: log.dateKey,
-                                    wordsReviewed: log.wordsReviewed,
-                                    wordsLearned: log.wordsLearned,
-                                    xpEarned: log.xpEarned,
-                                    roundsCompleted: log.roundsCompleted,
-                                    studySeconds: log.studySeconds,
-                                    correctReviews: log.correctReviews
-                                ))
-                            }
-                        }
-                        if let p = full.placement, let cefr = CefrLevel(rawValue: p.cefrLevel) {
-                            settings.placementLevelRaw = cefr.rawValue
-                            settings.placementCeilingFreq = p.ceilingFreq
-                            settings.placementBaselineWords = p.baselineWords
-                            settings.hasCompletedPlacement = true
-                        }
-                        try? modelContext.save()
-                        backupMessage = String(localized: "Imported \(full.favorites.count) saved & \(full.flashcards.count) studied words")
+                        let importedCount = try settings.importProfilesBackup(from: data)
+                        backupMessage = String(localized: "Imported \(importedCount) saved words")
                     } catch {
                         backupMessage = String(localized: "Could not read backup file")
                     }

@@ -355,4 +355,183 @@ final class DictionaryTests: XCTestCase {
         let withHit = try XCTUnwrap(withOutcome.results.first { $0.headword == "with" })
         XCTAssertTrue(withHit.preview.hasPrefix("бо"))
     }
+
+    func testLingvistTargetLanguageTrainerAndRussianEntryResolution() async throws {
+        let repo = try DictionaryRepository()
+        let domOutcome = try await repo.search(query: "дом", mode: .tjRu)
+        let domHit = try XCTUnwrap(domOutcome.results.first { $0.headword.lowercased() == "дом" })
+        let resolved = try await repo.learningCandidates(forEntryIds: [domHit.id], mode: .tjEn)
+        let first = try XCTUnwrap(resolved.first)
+        XCTAssertEqual(first.entryId, domHit.id)
+        XCTAssertEqual(first.language, .tajik)
+        XCTAssertEqual(first.headword, "хона")
+        XCTAssertTrue(first.preview.contains("house"))
+
+        let candidates = [
+            WordCardCandidate(entryId: 1, language: .tajik, headword: "хона", preview: "house, home, room", pos: .noun, frequency: 95, topic: "home", exampleTg: "Ин хона калон аст.", examplePartner: "This house is big."),
+            WordCardCandidate(entryId: 2, language: .tajik, headword: "рафтан", preview: "to go, to leave", pos: .verb, frequency: 96, topic: "verbs", exampleTg: "Ман ба мактаб меравам.", examplePartner: "I go to school."),
+            WordCardCandidate(entryId: 3, language: .tajik, headword: "китоб", preview: "book", pos: .noun, frequency: 94, topic: "education", exampleTg: nil, examplePartner: nil),
+            WordCardCandidate(entryId: 4, language: .tajik, headword: "об", preview: "water", pos: .noun, frequency: 98, topic: "food", exampleTg: nil, examplePartner: nil),
+        ]
+        let now = Date(timeIntervalSince1970: 1_731_000_000)
+        let items = WordGameEngine.makeRoundItems(
+            selected: Array(candidates.prefix(2)),
+            allPool: candidates,
+            fallbackDistractors: ["салом", "дӯст"],
+            progressById: [
+                2: WordProgressSnapshot(entryId: 2, masteryStage: 1, stabilityDays: 1.5, repetitions: 1, lapses: 0, lastReviewedAt: now, nextReviewAt: now.addingTimeInterval(3600))
+            ]
+        )
+        let houseItem = items[0]
+        XCTAssertEqual(houseItem.challengeKind, .multipleChoice)
+        XCTAssertEqual(houseItem.targetAnswer, "house")
+        XCTAssertEqual(houseItem.buildTarget, "house")
+        XCTAssertTrue(houseItem.choices.contains("house"))
+        XCTAssertFalse(houseItem.choices.contains("home"))
+        XCTAssertEqual(houseItem.clozeSentence, "This ____ is big.")
+        XCTAssertEqual(houseItem.clozeTranslation, "Ин хона калон аст.")
+
+        let goItem = items[1]
+        XCTAssertEqual(goItem.challengeKind, .wordBuilder)
+        XCTAssertEqual(goItem.targetAnswer, "to go")
+        XCTAssertEqual(goItem.buildTarget, "go")
+        XCTAssertEqual(goItem.tiles, ["o", "g"])
+        XCTAssertEqual(goItem.clozeSentence, "I ____ to school.")
+
+        XCTAssertEqual(WordGameEngine.checkTypedAnswer(input: "house", target: houseItem.buildTarget, acceptedAnswers: houseItem.acceptedAnswers), .exact)
+        XCTAssertEqual(WordGameEngine.checkTypedAnswer(input: "home", target: houseItem.buildTarget, acceptedAnswers: houseItem.acceptedAnswers), .exact)
+        XCTAssertEqual(WordGameEngine.checkTypedAnswer(input: "go", target: goItem.buildTarget, acceptedAnswers: goItem.acceptedAnswers), .exact)
+        XCTAssertEqual(WordGameEngine.checkTypedAnswer(input: "to go", target: goItem.buildTarget, acceptedAnswers: goItem.acceptedAnswers), .exact)
+        XCTAssertEqual(WordGameEngine.checkTypedAnswer(input: "leave", target: goItem.buildTarget, acceptedAnswers: goItem.acceptedAnswers), .exact)
+        XCTAssertEqual(WordGameEngine.checkTypedAnswer(input: "hause", target: houseItem.buildTarget, acceptedAnswers: houseItem.acceptedAnswers), .tajikLetterNearMiss(target: "house"))
+    }
+
+    @MainActor
+    func testMultiLearnerProfilesLimitAndSettingsIsolation() {
+        let suiteName = "tj.tajikdictionary.tests.profiles.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = SettingsStore(defaults: defaults)
+        XCTAssertEqual(store.profiles.count, 1)
+        XCTAssertEqual(store.activeProfileId, LearnerProfile.defaultProfileId)
+
+        // Configure Profile #1
+        store.studyMode = .tjRu
+        store.dailyGoal = 15
+        store.applyPlacement(
+            PlacementResult(
+                cefrLevel: .b1,
+                estimatedKnownWords: 1800,
+                textRecognitionPercent: 78.0,
+                correctCount: 12,
+                totalCount: 16,
+                knownEntryIds: [],
+                focusEntryIds: []
+            )
+        )
+
+        // Add Child Profile #2 (defaults to 5 dailyGoal, 6-word round)
+        let p2 = store.addProfile(name: "Zarina", avatar: "🦁", colorHex: "#1E6F9F", kind: .child)
+        XCTAssertNotNil(p2)
+        XCTAssertEqual(store.profiles.count, 2)
+        XCTAssertEqual(store.activeProfileId, p2?.id)
+        XCTAssertEqual(store.dailyGoal, 5)
+        XCTAssertEqual(store.activeProfile.kind.roundSize, 6)
+        XCTAssertFalse(store.hasCompletedPlacement)
+        XCTAssertNil(store.placementLevel)
+
+        // Add Adult Profile #3 (defaults to 10 dailyGoal, 10-word round)
+        let p3 = store.addProfile(name: "Amir", avatar: "🚀", colorHex: "#7B1FA2", kind: .adult)
+        XCTAssertNotNil(p3)
+        XCTAssertEqual(store.profiles.count, 3)
+        XCTAssertEqual(store.activeProfileId, p3?.id)
+        XCTAssertEqual(store.dailyGoal, 10)
+
+        // 4th profile exceeds LearnerProfile.maxProfiles (3) and must return nil
+        let p4 = store.addProfile(name: "Extra", avatar: "🐼", colorHex: "#E65100", kind: .adult)
+        XCTAssertNil(p4)
+        XCTAssertEqual(store.profiles.count, 3)
+
+        // Switch back to Profile #1 and verify settings isolation
+        store.switchProfile(to: LearnerProfile.defaultProfileId)
+        XCTAssertEqual(store.studyMode, .tjRu)
+        XCTAssertEqual(store.dailyGoal, 15)
+        XCTAssertEqual(store.placementLevel, .b1)
+
+        // Delete Profile #2 and #3; cannot delete last remaining profile
+        XCTAssertTrue(store.deleteProfile(id: p2!.id))
+        XCTAssertTrue(store.deleteProfile(id: p3!.id))
+        XCTAssertEqual(store.profiles.count, 1)
+        XCTAssertFalse(store.deleteProfile(id: LearnerProfile.defaultProfileId))
+    }
+
+    func testMultiProfileBackupV1RoundTrip() throws {
+        let p1 = LearnerProfile.defaultProfile(name: "Parent", createdAtMs: 1_731_000_000_000)
+        let p2 = LearnerProfile(id: "p_child1", name: "Zarina", avatar: "🦊", colorHex: "#E65100", kind: .child, createdAtMs: 1_731_000_100_000)
+        let entries = [
+            FavoritesBackup.ProfileEntryBackup(
+                profile: p1,
+                settings: FavoritesBackup.ProfileSettingsBackup(
+                    studyMode: DictionaryMode.tjRu.rawValue,
+                    dailyGoal: 15,
+                    placementLevel: "A2",
+                    placementCeilingFreq: 82,
+                    placementBaselineWords: 500
+                ),
+                favorites: [
+                    FavoritesBackup.Record(entryId: 42, lang: "tg", headword: "китоб", preview: "книга", addedAt: 1_731_000_000_000)
+                ],
+                flashcards: [
+                    FavoritesBackup.FlashcardRecord(
+                        entryId: 42,
+                        lang: "tg",
+                        headword: "китоб",
+                        preview: "книга",
+                        repetitions: 4,
+                        intervalDays: 10,
+                        easeFactor: 2.5,
+                        nextReviewAt: 1_731_900_000_000,
+                        masteryStage: 3,
+                        stabilityDays: 10.0,
+                        lapses: 0,
+                        lastReviewedAt: 1_731_000_000_000,
+                        isKnownSkipped: false
+                    )
+                ],
+                dailyLogs: [
+                    FavoritesBackup.DailyLogRecord(dateKey: "2026-11-22", wordsReviewed: 15, wordsLearned: 5, xpEarned: 180, roundsCompleted: 2, studySeconds: 300, correctReviews: 14)
+                ]
+            ),
+            FavoritesBackup.ProfileEntryBackup(
+                profile: p2,
+                settings: FavoritesBackup.ProfileSettingsBackup(
+                    studyMode: DictionaryMode.tjEn.rawValue,
+                    dailyGoal: 5,
+                    placementLevel: nil,
+                    placementCeilingFreq: 100,
+                    placementBaselineWords: 0
+                ),
+                favorites: [],
+                flashcards: [],
+                dailyLogs: [
+                    FavoritesBackup.DailyLogRecord(dateKey: "2026-11-22", wordsReviewed: 6, wordsLearned: 3, xpEarned: 80, roundsCompleted: 1, studySeconds: 120, correctReviews: 6)
+                ]
+            ),
+        ]
+
+        let data = try FavoritesBackup.encodeProfiles(profiles: entries, activeProfileId: "p_child1")
+        let decoded = try FavoritesBackup.decodeProfiles(from: data)
+        XCTAssertEqual(decoded.format, FavoritesBackup.profileBackupFormat)
+        XCTAssertEqual(decoded.version, 1)
+        XCTAssertEqual(decoded.activeProfileId, "p_child1")
+        XCTAssertEqual(decoded.profiles.count, 2)
+        XCTAssertEqual(decoded.profiles[0].profile.name, "Parent")
+        XCTAssertEqual(decoded.profiles[0].settings.placementLevel, "A2")
+        XCTAssertEqual(decoded.profiles[0].favorites.count, 1)
+        XCTAssertEqual(decoded.profiles[0].flashcards.count, 1)
+        XCTAssertEqual(decoded.profiles[1].profile.name, "Zarina")
+        XCTAssertEqual(decoded.profiles[1].profile.kind, .child)
+        XCTAssertEqual(decoded.profiles[1].settings.dailyGoal, 5)
+    }
 }

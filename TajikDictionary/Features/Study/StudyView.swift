@@ -188,6 +188,13 @@ struct StudyView: View {
         .background(AppTheme.background)
         .navigationTitle(selectedTopic.map { String(localized: "Study: \(TopicLocalization.displayName(for: $0))") } ?? String(localized: "Flashcards"))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                StudyLanguageMenu(
+                    title: selectedTopic.map { String(localized: "Study: \(TopicLocalization.displayName(for: $0))") } ?? String(localized: "Flashcards")
+                )
+            }
+        }
         .task {
             topics = (try? await repository.topics()) ?? []
             await reloadCards()
@@ -254,9 +261,28 @@ struct StudyView: View {
         let raw: [StudyCard]
         if let topic = selectedTopic {
             let rows = (try? await repository.entries(inTopic: topic, mode: settings.studyMode)) ?? []
-            raw = rows.map { StudyCard(entryId: $0.id, language: $0.language, headword: $0.headword, preview: $0.preview) }
+            raw = rows
+                .filter { !$0.preview.isEmpty }
+                .map { StudyCard(entryId: $0.id, language: $0.language, headword: $0.headword, preview: $0.preview) }
         } else {
-            raw = favorites.map { StudyCard(entryId: $0.entryId, language: $0.language, headword: $0.headword, preview: $0.preview) }
+            let resolved = (try? await repository.learningCandidates(
+                forEntryIds: favorites.map(\.entryId),
+                mode: settings.studyMode
+            )) ?? []
+            let resolvedById = Dictionary(uniqueKeysWithValues: resolved.map { ($0.entryId, $0) })
+            var list: [StudyCard] = []
+            for fav in favorites {
+                if let cand = resolvedById[fav.entryId], !cand.preview.isEmpty {
+                    list.append(StudyCard(entryId: cand.entryId, language: cand.language, headword: cand.headword, preview: cand.preview))
+                } else {
+                    let fresh = (try? await repository.preview(id: fav.entryId, mode: settings.studyMode)) ?? ""
+                    let p = fresh.isEmpty ? fav.preview : fresh
+                    if !p.isEmpty {
+                        list.append(StudyCard(entryId: fav.entryId, language: fav.language, headword: fav.headword, preview: p))
+                    }
+                }
+            }
+            raw = list
         }
         let sorted = raw.sorted {
             (progressById[$0.entryId]?.nextReviewAt ?? .distantPast) < (progressById[$1.entryId]?.nextReviewAt ?? .distantPast)

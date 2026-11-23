@@ -153,11 +153,12 @@ struct WordGameView: View {
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
-                        if let locale = settings.studyMode.partner.speechLocaleIdentifier,
-                           !item.card.preview.isEmpty {
+                        if item.challengeKind != .multipleChoice,
+                           let locale = settings.studyMode.partner.speechLocaleIdentifier,
+                           !item.buildTarget.isEmpty {
                             Button {
                                 speaker.speak(
-                                    item.card.preview,
+                                    item.buildTarget,
                                     localeIdentifier: locale,
                                     rate: settings.avSpeechRate
                                 )
@@ -170,17 +171,37 @@ struct WordGameView: View {
                         }
                     }
 
-                    Text(item.card.preview)
+                    Text(item.card.headword)
                         .font(.system(size: 24 * settings.fontScale.multiplier, weight: .bold))
                         .frame(maxWidth: .infinity, alignment: .leading)
 
+                    let partnerTitle = settings.studyMode.partner.title
+                    let directionLabel: String = {
+                        if item.challengeKind == .multipleChoice {
+                            return "\(Language.tajik.title) → \(partnerTitle)"
+                        } else {
+                            let pattern = item.buildTarget.map { $0 == " " ? "  " : "_" }.joined(separator: " ")
+                            return "\(Language.tajik.title) → \(partnerTitle)  ·  \(pattern) (\(item.buildTarget.count))"
+                        }
+                    }()
+                    Text(directionLabel)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.accentColor)
+
                     if let cloze = item.clozeSentence {
-                        Text(cloze)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding(10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(cloze)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
+                            if let trans = item.clozeTranslation, !trans.isEmpty {
+                                Text(trans)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
                 }
                 .padding(18)
@@ -244,7 +265,7 @@ struct WordGameView: View {
                         .padding()
                         .frame(maxWidth: .infinity)
                         .background(
-                            choiceBackground(choice: choice, correct: item.card.headword),
+                            choiceBackground(choice: choice, correct: item.targetAnswer),
                             in: RoundedRectangle(cornerRadius: 14, style: .continuous)
                         )
                     }
@@ -306,7 +327,7 @@ struct WordGameView: View {
 
         case .typing:
             VStack(spacing: 12) {
-                TextField(String(localized: "Type Tajik word…"), text: $typedAnswer)
+                TextField("\(settings.studyMode.partner.title) (\(item.buildTarget.count))…", text: $typedAnswer)
                     .textFieldStyle(.roundedBorder)
                     .font(.title3)
                     .textInputAutocapitalization(.never)
@@ -316,18 +337,13 @@ struct WordGameView: View {
                         submitTextAnswer(typedAnswer, item: item)
                     }
 
-                if item.card.language == .tajik {
-                    TajikLettersBar { letter in
-                        typedAnswer += letter
-                    }
-                }
-
                 if let target = nearMissTarget {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Almost! Watch the Tajik letter: \(target)")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.orange)
                         Button {
+                            speakTarget(item.buildTarget)
                             completeAnswer(isCorrect: true, usedHintOrNearMiss: true)
                         } label: {
                             Text("Use “\(target)” & Continue")
@@ -342,7 +358,7 @@ struct WordGameView: View {
                 HStack(spacing: 10) {
                     Button {
                         usedHint = true
-                        let prefix = String(item.card.headword.prefix(2))
+                        let prefix = String(item.buildTarget.prefix(2))
                         if !typedAnswer.lowercased().hasPrefix(prefix.lowercased()) {
                             typedAnswer = prefix
                         }
@@ -376,7 +392,7 @@ struct WordGameView: View {
 
             Spacer()
 
-            if item.isNewWord {
+            if item.isNewWord && !settings.activeProfile.isChild {
                 Button {
                     markAlreadyKnown(item: item)
                 } label: {
@@ -392,23 +408,48 @@ struct WordGameView: View {
     @ViewBuilder
     private func teachingCardView(item: GameRoundItem) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(String(localized: "Learn this word"), systemImage: "book.pages.fill")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.orange)
+            HStack {
+                Label(String(localized: "Learn this word"), systemImage: "book.pages.fill")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.orange)
+                Spacer()
+                if let locale = settings.studyMode.partner.speechLocaleIdentifier,
+                   !item.buildTarget.isEmpty {
+                    Button {
+                        speaker.speak(
+                            item.buildTarget,
+                            localeIdentifier: locale,
+                            rate: settings.avSpeechRate
+                        )
+                    } label: {
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.subheadline)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
 
-            Text(item.card.headword)
+            Text(item.targetAnswer)
                 .font(.system(size: 32 * settings.fontScale.multiplier, weight: .bold))
 
-            Text(item.card.preview)
-                .font(.title3)
-                .foregroundStyle(.secondary)
+            if item.card.preview.caseInsensitiveCompare(item.targetAnswer) != .orderedSame,
+               !item.card.preview.isEmpty {
+                Text(item.card.preview)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Text(item.card.headword)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Color.accentColor)
 
             if let exampleTg = item.card.exampleTg, !exampleTg.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(exampleTg).font(.subheadline.weight(.semibold))
                     if let exP = item.card.examplePartner, !exP.isEmpty {
-                        Text(exP).font(.caption).foregroundStyle(.secondary)
+                        Text(exP).font(.subheadline.weight(.semibold))
                     }
+                    Text(exampleTg).font(.caption).foregroundStyle(.secondary)
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -446,12 +487,21 @@ struct WordGameView: View {
         return VStack(spacing: 20) {
             Spacer()
 
-            Image(systemName: "trophy.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(.yellow)
+            HStack(spacing: 12) {
+                ProfileAvatarCircle(
+                    avatar: settings.activeProfile.avatar,
+                    colorHex: settings.activeProfile.colorHex,
+                    size: 46,
+                    fontSize: 22
+                )
+                Image(systemName: "trophy.fill")
+                    .font(.system(size: 52))
+                    .foregroundStyle(.yellow)
+            }
 
-            Text(String(localized: "Round complete!"))
+            Text(String(localized: "Round complete, \(settings.activeProfile.localizedDisplayName)!"))
                 .font(.largeTitle.bold())
+                .multilineTextAlignment(.center)
 
             Text(String(localized: "Every word in this round was practiced until learned."))
                 .font(.subheadline)
@@ -515,8 +565,12 @@ struct WordGameView: View {
                 .controlSize(.large)
 
                 Button {
-                    // At most one interstitial per 3 finished rounds and 3 minutes, only when leaving the game.
-                    AdsManager.shared.showInterstitialIfDue { dismiss() }
+                    if settings.activeProfile.isChild {
+                        dismiss()
+                    } else {
+                        // At most one interstitial per 3 finished rounds and 3 minutes, only when leaving the game.
+                        AdsManager.shared.showInterstitialIfDue { dismiss() }
+                    }
                 } label: {
                     Text(String(localized: "Done"))
                         .frame(maxWidth: .infinity)
@@ -544,9 +598,15 @@ struct WordGameView: View {
 
     private func choiceBackground(choice: String, correct: String) -> Color {
         guard let selectedChoice else { return Color.secondary.opacity(0.12) }
-        if choice == correct { return Color.green.opacity(0.22) }
+        if choice.caseInsensitiveCompare(correct) == .orderedSame { return Color.green.opacity(0.22) }
         if choice == selectedChoice { return Color.red.opacity(0.22) }
         return Color.secondary.opacity(0.08)
+    }
+
+    private func speakTarget(_ word: String) {
+        guard let locale = settings.studyMode.partner.speechLocaleIdentifier,
+              !word.isEmpty else { return }
+        speaker.speak(word, localeIdentifier: locale, rate: settings.avSpeechRate)
     }
 
     // MARK: - Actions & Persistence
@@ -564,6 +624,7 @@ struct WordGameView: View {
 
         lexiconStats = (try? await repository.lexiconStats()) ?? .fallback
         let mode = settings.studyMode
+        let roundSize = settings.activeProfile.kind.roundSize
         let progressById = Dictionary(uniqueKeysWithValues: progress.map { ($0.entryId, $0.snapshot) })
         let ceilingFreq = settings.hasCompletedPlacement ? settings.placementCeilingFreq : 100
         let pool: [WordCardCandidate]
@@ -585,7 +646,7 @@ struct WordGameView: View {
                     merged.append(item)
                 }
             }
-            if merged.count < WordGameEngine.defaultRoundSize, ceilingFreq < 100 {
+            if merged.count < roundSize, ceilingFreq < 100 {
                 let broad = (try? await repository.learningCandidates(topic: nil, mode: mode, maxFrequency: 100, limit: 200)) ?? []
                 for item in broad where seen.insert(item.entryId).inserted {
                     merged.append(item)
@@ -596,7 +657,7 @@ struct WordGameView: View {
                 candidates: pool,
                 progressById: progressById,
                 now: .now,
-                roundSize: WordGameEngine.defaultRoundSize,
+                roundSize: roundSize,
                 targetMaxFrequency: ceilingFreq
             )
         case .dueReviews:
@@ -606,7 +667,7 @@ struct WordGameView: View {
                 candidates: pool,
                 progressById: progressById,
                 now: .now,
-                roundSize: WordGameEngine.defaultRoundSize
+                roundSize: roundSize
             )
         case .weakWords:
             let weakIds = progress.filter {
@@ -616,7 +677,7 @@ struct WordGameView: View {
             selected = WordGameEngine.buildWeakRoundQueue(
                 candidates: pool,
                 progressById: progressById,
-                roundSize: WordGameEngine.defaultRoundSize
+                roundSize: roundSize
             )
         case .topic(let topic):
             pool = (try? await repository.learningCandidates(topic: topic, mode: mode, limit: 450)) ?? []
@@ -624,7 +685,7 @@ struct WordGameView: View {
                 candidates: pool,
                 progressById: progressById,
                 now: .now,
-                roundSize: WordGameEngine.defaultRoundSize,
+                roundSize: roundSize,
                 targetMaxFrequency: nil
             )
         case .saved:
@@ -634,18 +695,37 @@ struct WordGameView: View {
                 candidates: pool,
                 progressById: progressById,
                 now: .now,
-                roundSize: WordGameEngine.defaultRoundSize,
+                roundSize: roundSize,
                 targetMaxFrequency: nil
             )
         }
 
-        let fallbackDistractors = (try? await repository.topTajikHeadwords(limit: 60)) ?? []
-        let items = WordGameEngine.makeRoundItems(
+        let distractorPool: [WordCardCandidate]
+        if pool.count >= 8 {
+            distractorPool = pool
+        } else {
+            let extra = (try? await repository.learningCandidates(topic: nil, mode: mode, limit: 150)) ?? []
+            var seenIds = Set<Int64>()
+            distractorPool = (pool + extra).filter { seenIds.insert($0.entryId).inserted }
+        }
+        let fallbackDistractors = distractorPool
+            .map { WordGameEngine.primaryTargetWord($0.preview) }
+            .filter { !$0.isEmpty }
+        let rawItems = WordGameEngine.makeRoundItems(
             selected: selected,
-            allPool: pool,
+            allPool: distractorPool,
             fallbackDistractors: fallbackDistractors,
             progressById: progressById
         )
+        let items: [GameRoundItem] = settings.activeProfile.isChild
+            ? rawItems.map { item in
+                var copy = item
+                if copy.challengeKind == .typing {
+                    copy.challengeKind = .wordBuilder
+                }
+                return copy
+            }
+            : rawItems
 
         queue = items
         initialCount = items.count
@@ -655,9 +735,10 @@ struct WordGameView: View {
 
     private func handleMultipleChoice(_ choice: String, item: GameRoundItem) {
         selectedChoice = choice
-        let isCorrect = choice == item.card.headword
+        let isCorrect = choice.caseInsensitiveCompare(item.targetAnswer) == .orderedSame
         if isCorrect {
             feedbackBanner = (String(localized: "Correct!"), true)
+            speakTarget(item.buildTarget)
             Task {
                 try? await Task.sleep(for: .milliseconds(320))
                 completeAnswer(isCorrect: true, usedHintOrNearMiss: false)
@@ -669,9 +750,10 @@ struct WordGameView: View {
 
     private func submitTextAnswer(_ input: String, item: GameRoundItem) {
         KeyboardDismisser.dismiss()
-        switch WordGameEngine.checkTypedAnswer(input: input, target: item.card.headword) {
+        switch WordGameEngine.checkTypedAnswer(input: input, target: item.buildTarget, acceptedAnswers: item.acceptedAnswers) {
         case .exact:
             nearMissTarget = nil
+            speakTarget(item.buildTarget)
             completeAnswer(isCorrect: true, usedHintOrNearMiss: usedHint)
         case .tajikLetterNearMiss(let target):
             nearMissTarget = target
@@ -691,6 +773,7 @@ struct WordGameView: View {
         feedbackBanner = nil
 
         let item = queue[0]
+        speakTarget(item.buildTarget)
         persistEvaluation(
             card: item.card,
             isCorrect: false,
@@ -708,7 +791,7 @@ struct WordGameView: View {
         item.correctInRound = 0
         // Next pass uses recognition or builder so the user succeeds and builds confidence
         if item.challengeKind == .typing {
-            item.challengeKind = WordGameEngine.challengeKind(for: 1, headword: item.card.headword)
+            item.challengeKind = WordGameEngine.challengeKind(for: 1, headword: item.buildTarget)
         }
         let insertAt = WordGameEngine.reinsertIndex(remainingCount: queue.count)
         queue.insert(item, at: insertAt)
@@ -751,6 +834,7 @@ struct WordGameView: View {
         resetCardInputs()
         if queue.isEmpty {
             markRoundCompleted()
+            settings.refreshStats(for: settings.activeProfile.id, context: modelContext)
             roundFinished = true
         } else {
             cardPresentedAt = .now
@@ -792,6 +876,7 @@ struct WordGameView: View {
         resetCardInputs()
         if queue.isEmpty {
             markRoundCompleted()
+            settings.refreshStats(for: settings.activeProfile.id, context: modelContext)
             roundFinished = true
         } else {
             cardPresentedAt = .now

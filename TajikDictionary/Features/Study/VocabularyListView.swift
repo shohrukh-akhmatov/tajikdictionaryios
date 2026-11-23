@@ -22,12 +22,15 @@ private enum VocabFilter: String, CaseIterable, Identifiable {
 }
 
 struct VocabularyListView: View {
+    @Environment(\.dictionaryRepository) private var repository
     @Environment(\.modelContext) private var modelContext
+    @Environment(SettingsStore.self) private var settings
     @Query(sort: \FlashcardProgress.nextReviewAt) private var progress: [FlashcardProgress]
 
     @State private var filter: VocabFilter = .all
     @State private var searchText: String = ""
     @State private var practiceSource: GameDeckSource?
+    @State private var resolvedById: [Int64: WordCardCandidate] = [:]
 
     private var now: Date { .now }
 
@@ -49,7 +52,10 @@ struct VocabularyListView: View {
             }
             guard matchesFilter else { return false }
             guard !trimmed.isEmpty else { return true }
-            return item.headword.lowercased().contains(trimmed) || item.preview.lowercased().contains(trimmed)
+            let resolved = resolvedById[item.entryId]
+            let hw = (resolved?.headword ?? item.headword).lowercased()
+            let pv = ((resolved?.preview.isEmpty == false ? resolved?.preview : nil) ?? item.preview).lowercased()
+            return hw.contains(trimmed) || pv.contains(trimmed)
         }
     }
 
@@ -76,13 +82,16 @@ struct VocabularyListView: View {
                 )
             } else {
                 ForEach(filteredItems) { item in
+                    let resolved = resolvedById[item.entryId]
+                    let displayHeadword = resolved?.headword ?? item.headword
+                    let displayPreview = (resolved?.preview.isEmpty == false ? resolved?.preview : nil) ?? item.preview
                     NavigationLink(value: item.entryId) {
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(item.headword)
+                                Text(displayHeadword)
                                     .font(.headline)
-                                if !item.preview.isEmpty {
-                                    Text(item.preview)
+                                if !displayPreview.isEmpty {
+                                    Text(displayPreview)
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
@@ -116,6 +125,9 @@ struct VocabularyListView: View {
         .navigationTitle(String(localized: "My Vocabulary"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                StudyLanguageMenu(title: String(localized: "My Vocabulary"))
+            }
             if hasWeakWords {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(String(localized: "Drill Weak")) {
@@ -126,6 +138,11 @@ struct VocabularyListView: View {
         }
         .fullScreenCover(item: $practiceSource) { source in
             WordGameView(source: source)
+        }
+        .task(id: "\(settings.studyMode.rawValue)_\(progress.count)") {
+            let ids = progress.map(\.entryId)
+            let candidates = (try? await repository.learningCandidates(forEntryIds: ids, mode: settings.studyMode)) ?? []
+            resolvedById = Dictionary(uniqueKeysWithValues: candidates.map { ($0.entryId, $0) })
         }
     }
 

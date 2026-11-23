@@ -15,12 +15,13 @@ import UIKit
 /// - Hidden while the keyboard is up, so it never sits between the text field and the keys.
 /// - Switches to the word-detail ad unit while a word detail screen is pushed in this tab.
 struct StickyBannerAd: View {
+    @Environment(SettingsStore.self) private var settings: SettingsStore?
     private let ads = AdsManager.shared
     @State private var keyboardVisible = false
 
     var body: some View {
         VStack(spacing: 0) {
-            if ads.canShowAds, !keyboardVisible, AdsAvailability.shared.shouldTryAds {
+            if ads.canShowAds, !(settings?.activeProfile.isChild ?? false), !keyboardVisible, AdsAvailability.shared.shouldTryAds {
                 let isEntry = ads.entryScreensVisible > 0
                 WaterfallBannerSlot(slot: isEntry ? AdConfig.entryBanner : AdConfig.banner)
                     .id(isEntry) // fresh waterfall when the ad unit changes

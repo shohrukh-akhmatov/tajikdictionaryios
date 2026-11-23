@@ -14,6 +14,9 @@ struct LearnView: View {
     @State private var selectedSource: GameDeckSource = .smartMix
     @State private var activeGameSource: GameDeckSource?
     @State private var showPlacementTest = false
+    @State private var showProfileSwitcher = false
+    @State private var showAddProfileSheet = false
+    @State private var whoIsLearningChecked = false
 
     private var weakWordsCount: Int {
         progress.filter {
@@ -43,6 +46,26 @@ struct LearnView: View {
 
                     wordTrainerCard
 
+                    FamilyLearnersCard(
+                        profiles: settings.profiles,
+                        activeProfile: settings.activeProfile,
+                        activeSummary: summary,
+                        statsByProfile: settings.profileStats,
+                        onSelectProfile: { targetId in
+                            settings.switchProfile(to: targetId)
+                        },
+                        onOpenSwitcher: {
+                            showProfileSwitcher = true
+                        },
+                        onAddProfile: {
+                            if settings.profiles.count < LearnerProfile.maxProfiles {
+                                showAddProfileSheet = true
+                            } else {
+                                showProfileSwitcher = true
+                            }
+                        }
+                    )
+
                     if !settings.hasCompletedPlacement {
                         placementPromptCard
                     }
@@ -53,9 +76,35 @@ struct LearnView: View {
             }
             .background(AppTheme.background)
             .navigationTitle(String(localized: "Learn"))
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ProfileHeaderChip(
+                        activeProfile: settings.activeProfile,
+                        profileCount: settings.profiles.count
+                    ) {
+                        showProfileSwitcher = true
+                    }
+                }
+            }
             .task {
                 topics = (try? await repository.topics()) ?? []
                 lexiconStats = (try? await repository.lexiconStats()) ?? .fallback
+                syncActiveProfileStats()
+                if !whoIsLearningChecked && settings.profiles.count >= 2 {
+                    whoIsLearningChecked = true
+                    let elapsed = Date().timeIntervalSince1970 - settings.lastProfileSwitchEpoch
+                    if settings.askWhoIsLearning && elapsed > LearnerProfile.whoIsLearningCooldownSeconds {
+                        showProfileSwitcher = true
+                    }
+                }
+            }
+            .onChange(of: summary.totalXp) { _, _ in syncActiveProfileStats() }
+            .onChange(of: summary.todayReviewed) { _, _ in syncActiveProfileStats() }
+            .sheet(isPresented: $showProfileSwitcher) {
+                ProfileSwitcherSheet()
+            }
+            .sheet(isPresented: $showAddProfileSheet) {
+                ProfileEditorSheet(initialProfile: nil)
             }
             .fullScreenCover(item: $activeGameSource) { source in
                 WordGameView(source: source)
@@ -67,6 +116,25 @@ struct LearnView: View {
                 EntryDetailView(entryId: entryId)
             }
         }
+    }
+
+    private func syncActiveProfileStats() {
+        let s = summary
+        let latestKey = dailyLogs.filter { $0.wordsReviewed > 0 }.map(\.dateKey).max()
+        settings.updateProfileStats(
+            ProfileStatsSnapshot(
+                profileId: settings.activeProfile.id,
+                currentStreakDays: s.currentStreakDays,
+                longestStreakDays: s.longestStreakDays,
+                totalXp: s.totalXp,
+                masteredCount: s.masteredCount,
+                knownWordsCount: s.estimatedKnownWords,
+                todayReviewed: s.todayReviewed,
+                dailyGoal: s.dailyGoal,
+                cefrCode: s.cefrLevel.rawValue,
+                lastActiveDateKey: latestKey
+            )
+        )
     }
 
     private var selectedTopicName: String? {
@@ -124,7 +192,7 @@ struct LearnView: View {
                 Button {
                     activeGameSource = selectedSource
                 } label: {
-                    Label(String(localized: "Start 10-Word Round"), systemImage: "play.fill")
+                    Label(String(localized: "Start \(settings.activeProfile.kind.roundSize)-Word Round"), systemImage: "play.fill")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                 }

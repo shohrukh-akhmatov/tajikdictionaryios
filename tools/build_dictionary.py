@@ -64,10 +64,14 @@ _PARENT = os.path.dirname(ROOT)
 DEFAULT_OUTPUTS = [
     (os.path.join(ROOT, "app"), os.path.join(ROOT, ANDROID_ASSET)),                       # this = Android repo
     (os.path.join(ROOT, "TajikDictionary"), os.path.join(ROOT, IOS_ASSET)),               # this = iOS repo
+    (os.path.join(_PARENT, "dictionaryandroid", "app"),
+     os.path.join(_PARENT, "dictionaryandroid", ANDROID_ASSET)),                          # sibling Android repo
+    (os.path.join(_PARENT, "dictionaryios", "TajikDictionary"),
+     os.path.join(_PARENT, "dictionaryios", IOS_ASSET)),                                  # sibling iOS repo
     (os.path.join(_PARENT, "tajikdictionaryandroid", "app"),
-     os.path.join(_PARENT, "tajikdictionaryandroid", ANDROID_ASSET)),                     # sibling Android repo
+     os.path.join(_PARENT, "tajikdictionaryandroid", ANDROID_ASSET)),                     # legacy sibling Android repo
     (os.path.join(_PARENT, "tajikdictionaryios", "TajikDictionary"),
-     os.path.join(_PARENT, "tajikdictionaryios", IOS_ASSET)),                             # sibling iOS repo
+     os.path.join(_PARENT, "tajikdictionaryios", IOS_ASSET)),                             # legacy sibling iOS repo
 ]
 REQUIRED_COLUMNS = {"tg", "pos", "ru", "en", "frequency", "topic", "example_tg", "example_ru", "example_en"}
 VALID_POS = {"n", "v", "adj", "adv", "pron", "num", "prep", "conj", "intj", "part", "phr"}
@@ -177,6 +181,7 @@ CREATE INDEX idx_examples_entry ON examples(entry_id);
 """
 
 _NOTE = re.compile(r"^(.*?)\s*\(([^)]*)\)\s*$")
+_SOVIET_TJ_CHARS = re.compile(r"[цщыьЦЩЫЬ]")
 
 
 def split_translation(raw: str) -> Tuple[str, Optional[str]]:
@@ -254,6 +259,14 @@ class Builder:
         self._finalized = True
         for target_id, candidates in self._reverse_candidates.items():
             candidates.sort(key=lambda item: item[:5])
+            target_entry = self.entries[target_id - 1]
+            if candidates:
+                best_tg = self.entries[candidates[0][5] - 1]
+                target_entry["pos"] = best_tg["pos"]
+                if best_tg["topic"]:
+                    target_entry["topic"] = best_tg["topic"]
+            if target_entry["lang"] == "en" and target_entry["headword"].lower().startswith("to "):
+                target_entry["pos"] = "v"
             position = 0
             for _, _, _, _, _, tg_id, note in candidates:
                 if (target_id, tg_id) in self._links:
@@ -269,6 +282,8 @@ class Builder:
         pos = (row.get("pos") or "").strip() or None
         if not tg:
             raise ValueError(f"line {line}: empty 'tg'")
+        if _SOVIET_TJ_CHARS.search(tg):
+            self.warnings.append(f"line {line}: Soviet orthography character in tg={tg!r}")
         if pos and pos not in VALID_POS:
             raise ValueError(f"line {line}: unknown pos '{pos}' (valid: {sorted(VALID_POS)})")
 
@@ -309,6 +324,8 @@ class Builder:
             for rank, raw in enumerate(items):
                 if raw.count("(") != raw.count(")"):
                     self.warnings.append(f"line {line}: unbalanced parentheses in {lang} item {raw!r}")
+                if "и т. п" in raw or "и т.п" in raw:
+                    self.warnings.append(f"line {line}: broken 'и т. п' fragment in {lang} item {raw!r}")
                 headword, note = split_translation(raw)
                 target_id = self._target(lang, headword, pos, freq, topic)
                 if existing_id is not None and (tg_id, target_id) in self._links:

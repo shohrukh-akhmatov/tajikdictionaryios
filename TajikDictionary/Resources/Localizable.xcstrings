@@ -6624,6 +6624,251 @@
           }
         }
       }
+    },
+    "Me": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Me" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Я" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Ман" } }
+      }
+    },
+    "Who's learning?": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Who's learning?" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Кто сейчас учится?" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Кӣ меомӯзад?" } }
+      }
+    },
+    "Tap a profile to switch streaks, progress and saved words.": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Tap a profile to switch streaks, progress and saved words." } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Выберите профиль: у каждого своя серия, уровень и сохранённые слова." } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Профилро интихоб кунед: ҳар кас пешрафт ва калимаҳои худро дорад." } }
+      }
+    },
+    "Switch learner": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Switch learner" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Сменить профиль" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Ивази омӯзанда" } }
+      }
+    },
+    "Add learner": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Add learner" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Добавить профиль" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Иловаи омӯзанда" } }
+      }
+    },
+    "Edit profile": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Edit profile" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Изменить профиль" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Таҳрири профил" } }
+      }
+    },
+    "Learner name": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Learner name" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Имя ученика" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Номи омӯзанда" } }
+      }
+    },
+    "e.g. Zarina": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "e.g. Zarina" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "напр. Зарина" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "мас. Зарина" } }
+      }
+    },
+    "Avatar": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Avatar" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Аватар" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Аватар" } }
+      }
+    },
+    "Color": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Color" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Цвет" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Ранг" } }
+      }
+    },
+    "Profile type": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Profile type" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Тип профиля" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Намуди профил" } }
+      }
+    },
+    "Standard": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Standard" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Обычный" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Муқаррарӣ" } }
+      }
+    },
+    "10-word rounds · typing & tiles": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "10-word rounds · typing & tiles" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Раунды по 10 слов · ввод и карточки" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Даврҳои 10-калимагӣ · чоп ва кортҳо" } }
+      }
+    },
+    "Kid mode": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Kid mode" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Детский режим" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Реҷаи кӯдакона" } }
+      }
+    },
+    "6-word rounds · choice & tiles only · no ads": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "6-word rounds · choice & tiles only · no ads" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Раунды по 6 слов · без клавиатуры и рекламы" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Даврҳои 6-калимагӣ · бе клавиатура ва реклама" } }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Save" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Сохранить" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Захира кардан" } }
+      }
+    },
+    "Delete profile": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Delete profile" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Удалить профиль" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Ҳазфи профил" } }
+      }
+    },
+    "Delete %@?": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Delete %@?" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Удалить профиль «%@»?" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Профили «%@» ҳазф шавад?" } }
+      }
+    },
+    "This removes all learning progress and saved words for %@ on this device.": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "This removes all learning progress and saved words for %@ on this device." } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Весь прогресс и сохранённые слова для «%@» будут удалены с этого устройства." } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Ҳамаи пешрафт ва калимаҳои захирашудаи «%@» аз ин дастгоҳ пок мешаванд." } }
+      }
+    },
+    "%lld / %lld profiles": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%1$lld / %2$lld profiles" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "%1$lld / %2$lld профилей" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "%1$lld / %2$lld профил" } }
+      }
+    },
+    "Limit of %lld profiles per phone reached.": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Limit of %lld profiles per phone reached." } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Достигнут лимит: максимум %lld профиля на телефоне." } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Ҳадди аксар %lld профил дар як телефон пур шуд." } }
+      }
+    },
+    "Local profiles are automatically backed up with iCloud and can be exported anytime.": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Local profiles are automatically backed up with iCloud and can be exported anytime." } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Профили хранятся на устройстве, автоматически сохраняются в iCloud и доступны для экспорта." } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Профилҳо дар дастгоҳ нигоҳ дошта шуда, бо iCloud худкор нусхабардорӣ мешаванд." } }
+      }
+    },
+    "Family & Learners": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Family & Learners" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Семья и ученики" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Оила ва омӯзандагон" } }
+      }
+    },
+    "Tap any learner to switch in one tap": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Tap any learner to switch in one tap" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Нажмите на профиль, чтобы переключиться" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Барои гузаштан ба профил пахш кунед" } }
+      }
+    },
+    "Learning with family?": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Learning with family?" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Учитесь всей семьёй?" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Бо оила меомӯзед?" } }
+      }
+    },
+    "Add up to %lld local profiles on this phone — each with their own streak, level & saved words.": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Add up to %lld local profiles on this phone — each with their own streak, level & saved words." } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Добавьте до %lld профилей на один телефон — со своей серией, уровнем и словами." } },
+        "tg": { "stringUnit": { "state": "translated", "value": "То %lld профил дар як телефон илова кунед — ҳар кас бо сатҳ ва калимаҳои худ." } }
+      }
+    },
+    "Active": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Active" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Активен" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Фаъол" } }
+      }
+    },
+    "Practised today": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Practised today" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Занимался сегодня" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Имрӯз машқ кард" } }
+      }
+    },
+    "Ask “Who's learning?” on Learn tab": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Ask “Who's learning?” on Learn tab" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Спрашивать «Кто учится?» на вкладке Учить" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Пурсиши «Кӣ меомӯзад?» дар саҳифаи Омӯзиш" } }
+      }
+    },
+    "Round complete, %@!": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Round complete, %@!" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Раунд завершён, %@!" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Офарин, %@! Давр анҷом ёфт!" } }
+      }
+    },
+    "Start %lld-Word Round": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Start %lld-Word Round" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Начать раунд (%lld слов)" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Оғози даври %lld-калимагӣ" } }
+      }
+    },
+    "iCloud Auto Backup": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "iCloud Auto Backup" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Автобэкап в iCloud" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Нусхабардории худкор ба iCloud" } }
+      }
+    },
+    "Up to %lld local profiles are backed up automatically & can be exported to iCloud Drive": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Up to %lld local profiles are backed up automatically & can be exported to iCloud Drive" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "До %lld локальных профилей сохраняются автоматически и могут быть экспортированы в iCloud Drive" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "То %lld профили маҳаллӣ худкор нусхабардорӣ мешаванд ва ба iCloud Drive содир мешаванд" } }
+      }
+    },
+    "Export all profiles (iCloud Drive / JSON)": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Export all profiles (iCloud Drive / JSON)" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Экспорт всех профилей (iCloud Drive / JSON)" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Содироти ҳамаи профилҳо (iCloud Drive / JSON)" } }
+      }
+    },
+    "Restore profiles from backup (JSON)": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Restore profiles from backup (JSON)" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Восстановить профили из копии (JSON)" } },
+        "tg": { "stringUnit": { "state": "translated", "value": "Барқарорсозии профилҳо аз нусха (JSON)" } }
+      }
     }
   },
   "version": "1.1"

@@ -481,8 +481,9 @@ struct EntryDetailView: View {
         .buttonStyle(.plain)
     }
 
-    private func previewString(for detail: EntryDetail) -> String {
-        let target = settings.mode.translationTarget(for: detail.entry.language)
+    private func previewString(for detail: EntryDetail, mode: DictionaryMode? = nil) -> String {
+        let activeMode = mode ?? settings.mode
+        let target = activeMode.translationTarget(for: detail.entry.language)
         return (detail.translations[target] ?? [])
             .prefix(4)
             .map(\.headword)
@@ -544,7 +545,8 @@ struct EntryDetailView: View {
 
     private func queueForPractice(_ detail: EntryDetail) {
         let now = Date.now
-        let preview = previewString(for: detail)
+        let studyPreview = previewString(for: detail, mode: settings.studyMode)
+        let preview = studyPreview.isEmpty ? previewString(for: detail) : studyPreview
         if let existing = cardProgress {
             existing.isKnownSkipped = false
             existing.masteryStage = 0
@@ -575,7 +577,8 @@ struct EntryDetailView: View {
     private func markKnown(_ detail: EntryDetail) {
         let now = Date.now
         let future = now.addingTimeInterval(180 * WordGameEngine.daySeconds)
-        let preview = previewString(for: detail)
+        let studyPreview = previewString(for: detail, mode: settings.studyMode)
+        let preview = studyPreview.isEmpty ? previewString(for: detail) : studyPreview
         if let existing = cardProgress {
             existing.isKnownSkipped = true
             existing.masteryStage = 4
