@@ -3,6 +3,7 @@ import SwiftUI
 
 struct FavoritesView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(SettingsStore.self) private var settings
     @Query(sort: \FavoriteItem.addedAt, order: .reverse) private var favorites: [FavoriteItem]
     @State private var showGame = false
 
@@ -60,6 +61,7 @@ struct FavoritesView: View {
                 if !favorites.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
+                            settings.studyMode = settings.mode
                             showGame = true
                         } label: {
                             Label(String(localized: "Practice"), systemImage: "play.fill")

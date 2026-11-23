@@ -22,6 +22,8 @@ enum Language: String, CaseIterable, Codable, Hashable, Sendable {
         }
     }
 
+    var title: String { displayName }
+
     var speechLocaleIdentifier: String? {
         switch self {
         case .tajik: return nil

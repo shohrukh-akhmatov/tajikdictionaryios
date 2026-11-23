@@ -25,6 +25,10 @@ struct SettingsView: View {
                     ModeSwitcher(mode: $settings.mode)
                 }
 
+                Section(String(localized: "Learning language")) {
+                    ModeSwitcher(mode: $settings.studyMode)
+                }
+
                 Section(String(localized: "Appearance")) {
                     Picker(String(localized: "Theme"), selection: $settings.theme) {
                         ForEach(ThemeSetting.allCases) { item in

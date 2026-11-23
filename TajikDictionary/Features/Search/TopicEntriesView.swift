@@ -45,6 +45,7 @@ struct TopicEntriesView: View {
             if !entries.isEmpty {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        settings.studyMode = settings.mode
                         showGame = true
                     } label: {
                         Label(String(localized: "Practice"), systemImage: "play.fill")
