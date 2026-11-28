@@ -75,10 +75,11 @@ Both native apps bundle an identical, read-only SQLite database compiled from a 
 
 | File | Source / Authority | Size / Entries | Current App Coverage / Status |
 | :--- | :--- | :--- | :--- |
-| `books/saymiddinov2006_tj-ru.json` | *Фарҳанги тоҷикӣ ба русӣ* (D. Saymiddinov et al., Academy of Sciences, 2006) | `40,874` headwords | Covers **`13,037 / 18,487` (`70.5%`)** of app rows (orthography + `(...)` expanded). **`28,461`** Saymiddinov headwords are absent from the app. |
+| `books/farhangi_tojiki_rusi.zip` & `books/saymiddinov2006_clean.txt` & `_tj-ru.json` | *Фарҳанги тоҷикӣ ба русӣ* (D. Saymiddinov, S. D. Kholmatova, S. Karimov — Rudaki Institute, Academy of Sciences of Tajikistan, 2006; `.doc` UTF-16LE inside `.zip`) | `~70,000` expressions / `40,874` base keys | Covers **`13,037 / 18,487` (`70.5%`)** of app rows (orthography + `(...)` expanded). **`28,461`** Saymiddinov headwords are absent from the app; clean text requires **no OCR**. |
+| `books/3.-Мюллер-В.К.-Большой-англо-русский-и-русско-английский-словарь-_-Big-English-Russian-Russian-English-Dictionary.pdf` | Prof. V. K. Muller — *Большой англо-русский и русско-английский словарь* (Moscow: Eksmo, 2007, ISBN `978-5-699-23745-6`, `1,008` pages) | `200,000` words & expressions (EN→RU `pp. 10–669`, RU→EN `pp. 674–1000`, Irregular Verbs `pp. 1001–1006`) | **Clean digital text layer** extractable directly via `pypdfium2` (**no OCR needed**; do **not** use `pypdf`, which mangles CFF Type1 IPA/hyphens). Authoritative source for full `RU ↔ EN` cross-checking and homograph disambiguation. |
 | `datasets/egslava_taj_rus.csv` & `egslava_rus_taj.csv` | *Таджикско-русский* / *Русско-таджикский словарь* (M. S. Osimi, 1985) | ~40k rows | Combined with Saymiddinov, **`13,086 / 18,487` (`70.8%`)** are attested. **`3,394` single-word** & **`2,007` multi-word** rows remain unattested in these two books. |
 | `books/vozhahoi_seristemol.pdf` & `.txt` | *Луғати вожаҳои серистеъмоли забонҳои тоҷикӣ, русӣ ва англисӣ* (Ministry of Education, Dushanbe, 2022) | `1,095` lines | High-priority modern trilingual school & civic vocabulary; partially applied. |
-| `datasets/en_ru_dictionary_20k.json` & `openrussian/` | Muller 20k EN-RU + OpenRussian (RU-EN) | `20,036` EN / ~50k RU | Used for RU↔EN triangulation (`16,991` app rows match at least one Muller EN headword; `4,592` show raw surface token mismatch candidates needing semantic check). |
+| `datasets/en_ru_dictionary_20k.json` & `openrussian/` | Parsed Muller 20k subset EN-RU + OpenRussian (RU-EN) | `20,036` EN / ~50k RU | Legacy partial subset (`16,991` app rows match at least one EN headword). Superseded in depth by full `Muller 2007` (`1,008`-page PDF above). |
 | `datasets/kaikki-tg.jsonl` | Wiktionary Tajik JSONL extract | `13.5 MB` | Supplementary EN gloss reference. |
 | `datasets/oftob_*` | *Oftob.com* bilingual tables | Legacy reference | **Do not use as authority** — historical source of false cognates/slang; reference books always win. |
 | `reports/xcheck3/batches/b000.json`..`b091.json` | Pre-joined audit batches (`92` files, ~35 KB each) | `19,270` records | Pairs current dictionary entries with `[saym]`, `[osimi]`, `[oftob]`, `[wikt]` contexts. |
@@ -94,6 +95,8 @@ Both native apps bundle an identical, read-only SQLite database compiled from a 
 ---
 
 ## 4. Token-Sensitive (High-Demand) Tasks: Playbook for a Free Model
+
+> **Full Multi-Agent Execution Playbook (Unrestricted Token Budget):** If you want a multi-agent model/swarm to extract **100% clean text (no OCR)** from both the full **Muller 2007 PDF (`1,008` pages)** and **Saymiddinov 2006 (`farhangi_tojiki_rusi.zip`)** and run a **100% full-lexicon trilingual cross-check across all 18,487 entries** in parallel, hand it [`MULTI_AGENT_CROSSCHECK_TASK.md`](MULTI_AGENT_CROSSCHECK_TASK.md).
 
 Processing `18,487` entries + `976` scanned book pages through a frontier reasoning model consumes **8–12M+ tokens**. Instead, split the work into **small, deterministic JSON batches** (`100–250` items or `5–10` pages per prompt) and delegate them to a free text or vision model, then merge patches deterministically in Python and validate with `tools/build_dictionary.py`.
 
